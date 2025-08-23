@@ -1,0 +1,96 @@
+# 线上AWS环境配置文件
+
+# 主机配置
+host: "https://aws-online-api.example.com"
+
+# 超时配置
+timeout: 60
+retry_count: 3
+
+# 默认请求头
+default_headers:
+  Content-Type: "application/json"
+  Accept: "application/json"
+  User-Agent: "Universal-Test-Framework/1.0"
+
+# 数据库配置
+database:
+  mysql:
+    host: "aws-online-mysql.example.com"
+    port: 3306
+    username: "online_user"
+    password: "online_password"
+    database: "online_db"
+    charset: "utf8mb4"
+    pool_size: 20
+    max_overflow: 30
+    pool_timeout: 60
+    pool_recycle: 3600
+    description: "线上AWS MySQL数据库"
+
+# 环境配置
+environments:
+  # 线上生产环境
+  prod:
+    timeout: 120
+    retry_count: 3
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "https://online.example.com"
+      Authorization: "Bearer prod-token"
+    description: "线上生产环境"
+    
+  # 线上功能1预发布环境
+  pre_fea1:
+    timeout: 60
+    retry_count: 5
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "https://pre-fea1.example.com"
+      Authorization: "Bearer pre-fea1-token"
+    description: "线上功能1预发布环境"
+    
+  # 线上功能2预发布环境
+  pre_fea2:
+    timeout: 60
+    retry_count: 5
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "https://pre-fea2.example.com"
+      Authorization: "Bearer pre-fea2-token"
+    description: "线上功能2预发布环境"
+    
+  # 线上预发布环境
+  pre_staging:
+    timeout: 60
+    retry_count: 5
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "https://pre-staging.example.com"
+      Authorization: "Bearer pre-staging-token"
+    description: "线上预发布环境"
+
+# 测试配置
+test_config:
+  # 测试数据路径
+  test_data_dir: "data"
+  
+  # 测试报告路径
+  test_report_dir: "reports"
+  
+  # 测试日志路径
+  test_log_dir: "logs"
+  
+  # 默认测试标记
+  default_markers:
+    - "unit"
+    - "integration"
+    - "api"
+    - "smoke"
+    - "regression"
+    - "online"
+    - "aws"

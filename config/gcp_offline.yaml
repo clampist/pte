@@ -1,0 +1,92 @@
+# 线下GCP环境配置文件
+
+# 主机配置
+host: "http://gcp-offline-api.example.com"
+
+# 超时配置
+timeout: 30
+retry_count: 3
+
+# 默认请求头
+default_headers:
+  Content-Type: "application/json"
+  Accept: "application/json"
+  User-Agent: "Universal-Test-Framework/1.0"
+
+# 数据库配置
+database:
+  mysql:
+    host: "gcp-offline-mysql.example.com"
+    port: 3306
+    username: "offline_user"
+    password: "offline_password"
+    database: "offline_db"
+    charset: "utf8mb4"
+    pool_size: 10
+    max_overflow: 20
+    pool_timeout: 30
+    pool_recycle: 3600
+    description: "线下GCP MySQL数据库"
+
+# 环境配置
+environments:
+  # 线下生产环境
+  prod:
+    timeout: 30
+    retry_count: 3
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "http://offline.example.com"
+    description: "线下生产环境"
+    
+  # 线下功能1开发环境
+  dev_fea1:
+    timeout: 30
+    retry_count: 3
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "http://dev-fea1.example.com"
+    description: "线下功能1开发环境"
+    
+  # 线下CI环境
+  dev_ci:
+    timeout: 30
+    retry_count: 3
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "http://dev-ci.example.com"
+    description: "线下CI环境"
+    
+  # 线下测试环境
+  dev_test:
+    timeout: 30
+    retry_count: 3
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "http://dev-test.example.com"
+    description: "线下测试环境"
+
+# 测试配置
+test_config:
+  # 测试数据路径
+  test_data_dir: "data"
+  
+  # 测试报告路径
+  test_report_dir: "reports"
+  
+  # 测试日志路径
+  test_log_dir: "logs"
+  
+  # 默认测试标记
+  default_markers:
+    - "unit"
+    - "integration"
+    - "api"
+    - "smoke"
+    - "regression"
+    - "offline"
+    - "gcp"

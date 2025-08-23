@@ -1,0 +1,8 @@
+#!/bin/bash
+# PTE Framework Test Runner - Entry Point
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Execute the pte.sh script with all arguments
+exec "$SCRIPT_DIR/pte.sh" "$@"
