@@ -6,3 +6,4 @@ sqlalchemy==2.0.23
 allure-pytest==2.13.2
 pytest-cov==4.1.0
 pytest-xdist==3.3.1
+pytest-rerunfailures==12.0

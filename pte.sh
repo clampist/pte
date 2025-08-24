@@ -56,10 +56,16 @@ show_help() {
     echo "  help                 Show this help information"
     echo ""
     echo "Parallel Testing Options:"
-    echo "  --parallel           Run tests in parallel (auto-detect CPU cores)"
-    echo "  --parallel=N         Run tests with N parallel workers"
-    echo "  --no-parallel        Disable parallel execution (default)"
-    echo ""
+echo "  --parallel           Run tests in parallel (auto-detect CPU cores)"
+echo "  --parallel=N         Run tests with N parallel workers"
+echo "  --no-parallel        Disable parallel execution (default)"
+echo ""
+echo "Rerun Options:"
+echo "  --reruns=N           Number of times to rerun failed tests (default: 1)"
+echo "  --reruns-delay=N     Delay in seconds between reruns (default: 1)"
+echo "  --no-rerun           Disable test rerun functionality"
+echo "  --rerun-only-failed  Only rerun tests that failed in the last run"
+echo ""
     echo "Examples:"
     echo "  pte run test/department/user                    # Run all tests in user directory"
     echo "  pte run test/department/user --parallel        # Run tests in parallel"
@@ -70,9 +76,12 @@ show_help() {
     echo "  pte run test/department/user -m \"not slow\"    # Run tests with pytest markers"
     echo "  pte run test/department/user -k \"api\"         # Run tests matching pattern"
     echo "  pte run test/department/user -v --tb=short     # Run with pytest options"
-    echo "  pte demo                                          # Run demo tests"
-    echo "  pte business                                      # Run business tests"
-    echo "  pte all                                           # Run all tests"
+echo "  pte run test/department/user --reruns=3         # Rerun failed tests 3 times"
+echo "  pte run test/department/user --reruns=2 --reruns-delay=2  # Rerun with 2s delay"
+echo "  pte run test/department/user --rerun-only-failed # Only rerun previously failed tests"
+echo "  pte demo                                          # Run demo tests"
+echo "  pte business                                      # Run business tests"
+echo "  pte all                                           # Run all tests"
     echo ""
     echo "Pytest Options:"
     echo "  All standard pytest options are supported:"
@@ -122,11 +131,14 @@ run_pytest() {
     print_header "🚀 Running PTE Framework Tests"
     print_info "Test path: $test_path"
     
-    # Parse parallel options
+    # Parse parallel and rerun options
     local parallel_workers=""
+    local rerun_count=""
+    local rerun_delay=""
+    local rerun_only_failed=""
     local pytest_options=()
     
-    # Process arguments to extract parallel options
+    # Process arguments to extract parallel and rerun options
     while [ $# -gt 0 ]; do
         case "$1" in
             --parallel)
@@ -149,6 +161,26 @@ run_pytest() {
             --no-parallel)
                 parallel_workers=""
                 print_info "Parallel execution disabled"
+                shift
+                ;;
+            --reruns=*)
+                rerun_count="${1#--reruns=}"
+                print_info "Setting rerun count: $rerun_count"
+                shift
+                ;;
+            --reruns-delay=*)
+                rerun_delay="${1#--reruns-delay=}"
+                print_info "Setting rerun delay: $rerun_delay seconds"
+                shift
+                ;;
+            --no-rerun)
+                rerun_count="0"
+                print_info "Rerun functionality disabled"
+                shift
+                ;;
+            --rerun-only-failed)
+                rerun_only_failed="--lf"
+                print_info "Only rerunning previously failed tests"
                 shift
                 ;;
             *)
@@ -203,6 +235,23 @@ run_pytest() {
             print_info "Running tests in parallel with $parallel_workers workers"
         fi
         
+        # Add rerun options if specified
+        if [ -n "$rerun_count" ]; then
+            cmd="$cmd --reruns=$rerun_count"
+            if [ -n "$rerun_delay" ]; then
+                cmd="$cmd --reruns-delay=$rerun_delay"
+            fi
+            print_info "Rerun configuration: $rerun_count retries"
+            if [ -n "$rerun_delay" ]; then
+                print_info "Rerun delay: $rerun_delay seconds"
+            fi
+        fi
+        
+        # Add rerun-only-failed option if specified
+        if [ -n "$rerun_only_failed" ]; then
+            cmd="$cmd $rerun_only_failed"
+        fi
+        
         # Add pytest options if provided
         if [ ${#pytest_options[@]} -gt 0 ]; then
             cmd="$cmd ${pytest_options[*]}"
@@ -224,6 +273,23 @@ run_pytest() {
         if [ -n "$parallel_workers" ]; then
             cmd="$cmd -n $parallel_workers"
             print_info "Running tests in parallel with $parallel_workers workers"
+        fi
+        
+        # Add rerun options if specified
+        if [ -n "$rerun_count" ]; then
+            cmd="$cmd --reruns=$rerun_count"
+            if [ -n "$rerun_delay" ]; then
+                cmd="$cmd --reruns-delay=$rerun_delay"
+            fi
+            print_info "Rerun configuration: $rerun_count retries"
+            if [ -n "$rerun_delay" ]; then
+                print_info "Rerun delay: $rerun_delay seconds"
+            fi
+        fi
+        
+        # Add rerun-only-failed option if specified
+        if [ -n "$rerun_only_failed" ]; then
+            cmd="$cmd $rerun_only_failed"
         fi
         
         # Add pytest options if provided
