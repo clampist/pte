@@ -35,11 +35,11 @@ class TestBusinessUserManagement:
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_creation_business_logic(self):
         """Test user creation business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_creation_business_logic")
         
         try:
@@ -84,18 +84,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_creation_business_logic", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_creation_business_logic", "PASSED")
     
     @allure.story("User Retrieval Business Logic")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_retrieval_business_logic(self):
         """Test user retrieval business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_retrieval_business_logic")
         
         try:
@@ -133,18 +133,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_retrieval_business_logic", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_retrieval_business_logic", "PASSED")
     
     @allure.story("User Update Business Logic")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_update_business_logic(self):
         """Test user update business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_update_business_logic")
         
         try:
@@ -185,18 +185,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_update_business_logic", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_update_business_logic", "PASSED")
     
     @allure.story("User Deletion Business Logic")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_deletion_business_logic(self):
         """Test user deletion business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_deletion_business_logic")
         
         try:
@@ -234,18 +234,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_deletion_business_logic", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_deletion_business_logic", "PASSED")
     
     @allure.story("User Validation Business Logic")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_validation_business_logic(self):
         """Test user validation business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_validation_business_logic")
         
         try:
@@ -288,18 +288,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_validation_business_logic", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_validation_business_logic", "PASSED")
     
     @allure.story("User Error Handling Business Logic")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_error_handling_business_logic(self):
         """Test user error handling business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_error_handling_business_logic")
         
         try:
@@ -337,18 +337,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_error_handling_business_logic", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_error_handling_business_logic", "PASSED")
     
     @allure.story("User Business Rules")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_business_rules(self):
         """Test user business rules"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_business_rules")
         
         try:
@@ -394,18 +394,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_business_rules", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_business_rules", "PASSED")
     
     @allure.story("User Data Transformation")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_data_transformation(self):
         """Test user data transformation business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_data_transformation")
         
         try:
@@ -443,18 +443,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_data_transformation", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_data_transformation", "PASSED")
     
     @allure.story("User Business Workflow")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_business_workflow(self):
         """Test user business workflow"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_business_workflow")
         
         try:
@@ -493,18 +493,18 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_business_workflow", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_business_workflow", "PASSED")
     
     @allure.story("User Business Integration")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_business_integration(self):
         """Test user business integration"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_business_integration")
         
         try:
@@ -542,5 +542,5 @@ class TestBusinessUserManagement:
             Log.end_test("test_user_business_integration", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_business_integration", "PASSED") 

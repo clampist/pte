@@ -203,6 +203,32 @@ class Checker:
         assert actual_length > min_length, \
             f"{message or f'Length too short for {field_name or "data"}'}: must be > {min_length}, got {actual_length}"
     
+    # ==================== Comparison Assertions ====================
+    
+    @staticmethod
+    def assert_greater_than(actual: Union[int, float], expected: Union[int, float], field_name: str = None, message: str = None):
+        """Assert actual value is greater than expected value"""
+        assert actual > expected, \
+            f"{message or f'{field_name or actual} must be greater than {expected}, got {actual}'}"
+    
+    @staticmethod
+    def assert_greater_equal(actual: Union[int, float], expected: Union[int, float], field_name: str = None, message: str = None):
+        """Assert actual value is greater than or equal to expected value"""
+        assert actual >= expected, \
+            f"{message or f'{field_name or actual} must be greater than or equal to {expected}, got {actual}'}"
+    
+    @staticmethod
+    def assert_less_than(actual: Union[int, float], expected: Union[int, float], field_name: str = None, message: str = None):
+        """Assert actual value is less than expected value"""
+        assert actual < expected, \
+            f"{message or f'{field_name or actual} must be less than {expected}, got {actual}'}"
+    
+    @staticmethod
+    def assert_less_equal(actual: Union[int, float], expected: Union[int, float], field_name: str = None, message: str = None):
+        """Assert actual value is less than or equal to expected value"""
+        assert actual <= expected, \
+            f"{message or f'{field_name or actual} must be less than or equal to {expected}, got {actual}'}"
+    
     # ==================== Range and Validation Assertions ====================
     
     @staticmethod

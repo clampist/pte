@@ -190,7 +190,7 @@ class Log:
                     caller_info = self._get_caller_info()
                     record.caller_info = caller_info
                     
-                    # Format: [时间戳] [INFO等级别] [LogId] [文件名：行号] [日志内容]
+                    # Format: [timestamp] [INFO level] [LogId] [filename:line] [log content]
                     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     return f"[{timestamp}] [{record.levelname}] [{record.logid}] [{record.caller_info}] {record.getMessage()}"
                 
@@ -259,7 +259,7 @@ class Log:
         caller_info = self._get_caller_info()
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        # Format: [时间戳] [INFO等级别] [LogId] [文件名：行号] [日志内容]
+        # Format: [timestamp] [INFO level] [LogId] [filename:line] [log content]
         log_entry = f"[{timestamp}] [{level.upper()}] [{self.logid}] [{caller_info}] {message}"
         
         # Create file manager lazily if needed

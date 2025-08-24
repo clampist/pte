@@ -1,55 +1,55 @@
 """
-演示文件日志功能的测试示例
+Demo test examples for file logging functionality
 """
 import pytest
 from core.logger import Log, generate_logid
 
 
 class TestFileLoggingDemo:
-    """演示文件日志功能的测试类"""
+    """Demo test class for file logging functionality"""
     
     def test_basic_logging(self):
-        """测试基本日志功能"""
-        # 第1步：设置 LogID
+        """Test basic logging functionality"""
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_basic_logging")
         
         try:
-            Log.info("这是一条信息日志")
-            Log.warning("这是一条警告日志")
-            Log.error("这是一条错误日志")
-            Log.debug("这是一条调试日志")
+            Log.info("This is an info log")
+            Log.warning("This is a warning log")
+            Log.error("This is an error log")
+            Log.debug("This is a debug log")
             
-            # 记录结构化数据
+            # Log structured data
             user_data = {
                 "user_id": 12345,
                 "username": "testuser",
                 "email": "test@example.com"
             }
-            Log.info("用户数据", user_data)
+            Log.info("User data", user_data)
             
         except Exception as e:
             Log.error(f"test_basic_logging test failed: {str(e)}")
             Log.end_test("test_basic_logging", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_basic_logging", "PASSED")
     
     def test_api_logging(self):
-        """测试 API 调用日志"""
-        # 第1步：设置 LogID
+        """Test API call logging"""
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_logging")
         
         try:
-            # 模拟 API 调用
+            # Simulate API call
             Log.api_call(
                 method="POST",
                 url="/api/users",
@@ -59,7 +59,7 @@ class TestFileLoggingDemo:
                 response_data={"user_id": 67890, "status": "created"}
             )
             
-            # 模拟另一个 API 调用
+            # Simulate another API call
             Log.api_call(
                 method="GET",
                 url="/api/users/67890",
@@ -72,201 +72,201 @@ class TestFileLoggingDemo:
             Log.end_test("test_api_logging", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_logging", "PASSED")
     
     def test_assertion_logging(self):
-        """测试断言日志"""
-        # 第1步：设置 LogID
+        """Test assertion logging"""
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_assertion_logging")
         
         try:
-            # 成功的断言
-            Log.assertion("检查用户ID", True, 12345, 12345)
-            Log.assertion("检查用户名", True, "testuser", "testuser")
+            # Successful assertion
+            Log.assertion("Check user ID", True, 12345, 12345)
+            Log.assertion("Check username", True, "testuser", "testuser")
             
-            # 失败的断言
-            Log.assertion("检查用户年龄", False, 25, 30)
-            Log.assertion("检查用户邮箱", False, "test@example.com", "wrong@example.com")
+            # Failed assertion
+            Log.assertion("Check user age", False, 25, 30)
+            Log.assertion("Check user email", False, "test@example.com", "wrong@example.com")
             
         except Exception as e:
             Log.error(f"test_assertion_logging test failed: {str(e)}")
             Log.end_test("test_assertion_logging", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_assertion_logging", "PASSED")
     
     def test_data_validation(self):
-        """测试数据验证日志"""
-        # 第1步：设置 LogID
+        """Test data validation logging"""
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_data_validation")
         
         try:
-            # 成功的数据验证
-            Log.data_validation("用户名", "testuser", "testuser", True)
-            Log.data_validation("邮箱格式", "test@example.com", "test@example.com", True)
+            # Successful data validation
+            Log.data_validation("Username", "testuser", "testuser", True)
+            Log.data_validation("Email format", "test@example.com", "test@example.com", True)
             
-            # 失败的数据验证
-            Log.data_validation("用户年龄", 25, 30, False)
-            Log.data_validation("用户状态", "active", "inactive", False)
+            # Failed data validation
+            Log.data_validation("User age", 25, 30, False)
+            Log.data_validation("User status", "active", "inactive", False)
             
         except Exception as e:
             Log.error(f"test_data_validation test failed: {str(e)}")
             Log.end_test("test_data_validation", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_data_validation", "PASSED")
     
     def test_step_logging(self):
-        """测试步骤日志"""
-        # 第1步：设置 LogID
+        """Test step logging"""
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_step_logging")
         
         try:
-            @Log.step("用户注册步骤")
+            @Log.step("User registration step")
             def register_user():
-                Log.info("开始用户注册流程")
+                Log.info("Starting user registration process")
                 
-                @Log.step("验证用户信息")
+                @Log.step("Validate user information")
                 def validate_user_info():
-                    Log.info("验证用户名和邮箱")
+                    Log.info("Validating username and email")
                     return True
                 
-                @Log.step("创建用户账户")
+                @Log.step("Create user account")
                 def create_account():
-                    Log.info("在数据库中创建用户账户")
+                    Log.info("Creating user account in database")
                     return {"user_id": 99999}
                 
-                # 执行步骤
+                # Execute steps
                 validate_user_info()
                 account = create_account()
-                Log.info("用户注册完成", account)
+                Log.info("User registration completed", account)
                 return account
             
-            # 执行注册流程
+            # Execute registration process
             result = register_user()
-            Log.info("注册流程执行完成", result)
+            Log.info("Registration process execution completed", result)
             
         except Exception as e:
             Log.error(f"test_step_logging test failed: {str(e)}")
             Log.end_test("test_step_logging", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_step_logging", "PASSED")
     
     def test_error_handling(self):
-        """测试错误处理日志"""
-        # 第1步：设置 LogID
+        """Test error handling logging"""
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_error_handling")
         
         try:
             try:
-                # 模拟一个可能出错的操作
-                Log.info("开始执行可能出错的操作")
+                # Simulate an operation that might fail
+                Log.info("Starting operation that might fail")
                 
-                # 模拟异常
-                raise ValueError("这是一个模拟的错误")
+                # Simulate exception
+                raise ValueError("This is a simulated error")
                 
             except Exception as e:
-                Log.error(f"操作执行失败: {str(e)}")
-                Log.info("开始错误恢复流程")
+                Log.error(f"Operation execution failed: {str(e)}")
+                Log.info("Starting error recovery process")
                 
-                # 模拟错误恢复
-                Log.info("错误恢复完成")
+                # Simulate error recovery
+                Log.info("Error recovery completed")
             
         except Exception as e:
             Log.error(f"test_error_handling test failed: {str(e)}")
             Log.end_test("test_error_handling", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_error_handling", "PASSED")
     
     def test_performance_logging(self):
-        """测试性能相关日志"""
-        # 第1步：设置 LogID
+        """Test performance-related logging"""
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_performance_logging")
         
         try:
             import time
             
-            Log.info("开始性能测试")
+            Log.info("Starting performance test")
             
-            # 模拟耗时操作
+            # Simulate time-consuming operation
             start_time = time.time()
-            time.sleep(0.1)  # 模拟 100ms 的操作
+            time.sleep(0.1)  # Simulate 100ms operation
             end_time = time.time()
             
             duration = end_time - start_time
-            Log.info(f"操作耗时: {duration:.3f} 秒")
+            Log.info(f"Operation duration: {duration:.3f} seconds")
             
-            # 记录性能指标
+            # Log performance metrics
             performance_data = {
                 "operation": "data_processing",
                 "duration_ms": duration * 1000,
                 "status": "success"
             }
-            Log.info("性能指标", performance_data)
+            Log.info("Performance metrics", performance_data)
             
         except Exception as e:
             Log.error(f"test_performance_logging test failed: {str(e)}")
             Log.end_test("test_performance_logging", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_performance_logging", "PASSED")
 
 
 def test_standalone_function():
-    """独立的测试函数示例"""
-    # 第1步：设置 LogID
+    """Standalone test function example"""
+    # Step 1: Set LogID
     logid = generate_logid()
     Log.set_logid(logid)
     
-    # 第2步：开始测试
+    # Step 2: Start test
     Log.start_test("test_standalone_function")
     
     try:
-        Log.info("开始独立函数测试")
+        Log.info("Starting standalone function test")
         
-        # 执行测试逻辑
+        # Execute test logic
         Log.api_call("GET", "/api/health", 200, 0.1)
-        Log.assertion("健康检查", True, 200, 200)
+        Log.assertion("Health check", True, 200, 200)
         
-        Log.info("独立函数测试完成")
+        Log.info("Standalone function test completed")
         
     except Exception as e:
         Log.error(f"test_standalone_function test failed: {str(e)}")
         Log.end_test("test_standalone_function", "FAILED")
         raise
     else:
-        # 最后一步：结束测试
+        # Final step: End test
         Log.end_test("test_standalone_function", "PASSED")
 
 
 if __name__ == "__main__":
-    # 可以直接运行此文件进行测试
+    # This file can be run directly for testing
     pytest.main([__file__, "-v"])

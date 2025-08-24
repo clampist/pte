@@ -19,6 +19,7 @@ from unittest.mock import Mock, patch
 
 from core.logger import Log, generate_logid
 from core.retry import retry
+from core.checker import Checker
 
 
 class TestRerunBasicFunctionality:
@@ -26,7 +27,7 @@ class TestRerunBasicFunctionality:
     
     def test_always_passes(self):
         """Test that always passes - no rerun needed"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -34,7 +35,7 @@ class TestRerunBasicFunctionality:
         
         try:
             Log.info("This test should always pass")
-            assert True
+            Checker.assert_true(True)
             
         except Exception as e:
             Log.error(f"test_always_passes test failed: {str(e)}")
@@ -46,7 +47,7 @@ class TestRerunBasicFunctionality:
     @pytest.mark.xfail(reason="This test is designed to fail to demonstrate rerun functionality")
     def test_always_fails(self):
         """Test that always fails - will be retried based on configuration"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -54,7 +55,7 @@ class TestRerunBasicFunctionality:
         
         try:
             Log.info("This test always fails - will be retried")
-            assert False, "This test is designed to fail"
+            Checker.assert_true(False, "This test is designed to fail")
             
         except Exception as e:
             Log.error(f"test_always_fails test failed: {str(e)}")
@@ -65,7 +66,7 @@ class TestRerunBasicFunctionality:
     
     def test_sometimes_fails(self):
         """Test that fails randomly - demonstrates rerun value"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -75,10 +76,10 @@ class TestRerunBasicFunctionality:
             # Simulate flaky test with 30% failure rate (lower for demo)
             if random.random() < 0.3:
                 Log.warning("Test failed randomly - will be retried")
-                assert False, "Random failure occurred"
+                Checker.assert_true(False, "Random failure occurred")
             else:
                 Log.info("Test passed on this attempt")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_sometimes_fails test failed: {str(e)}")
@@ -94,7 +95,7 @@ class TestRerunWithMarkers:
     @pytest.mark.flaky
     def test_flaky_marked_test(self):
         """Test marked as flaky - should be retried more aggressively"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -104,10 +105,10 @@ class TestRerunWithMarkers:
             # Simulate flaky behavior with lower failure rate for demo
             if random.random() < 0.3:  # 30% failure rate
                 Log.warning("Flaky test failed - will be retried")
-                assert False, "Flaky test failure"
+                Checker.assert_true(False, "Flaky test failure")
             else:
                 Log.info("Flaky test passed")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_flaky_marked_test test failed: {str(e)}")
@@ -119,7 +120,7 @@ class TestRerunWithMarkers:
     @pytest.mark.stable
     def test_stable_marked_test(self):
         """Test marked as stable - should not need retries"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -127,7 +128,7 @@ class TestRerunWithMarkers:
         
         try:
             Log.info("Stable test - should pass consistently")
-            assert True
+            Checker.assert_true(True)
             
         except Exception as e:
             Log.error(f"test_stable_marked_test test failed: {str(e)}")
@@ -139,7 +140,7 @@ class TestRerunWithMarkers:
     @pytest.mark.api
     def test_api_test_with_rerun(self):
         """API test that might fail due to network issues"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -152,7 +153,7 @@ class TestRerunWithMarkers:
                 raise ConnectionError("Network timeout")
             else:
                 Log.info("API test succeeded")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_api_test_with_rerun test failed: {str(e)}")
@@ -167,7 +168,7 @@ class TestRerunWithCustomLogic:
     
     def test_conditional_rerun(self):
         """Test with custom retry logic using PTE retry decorator"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -182,7 +183,7 @@ class TestRerunWithCustomLogic:
             
             result = flaky_operation()
             Log.info(f"Operation result: {result}")
-            assert result == "success"
+            Checker.assert_equal(result, "success")
             
         except Exception as e:
             Log.error(f"test_conditional_rerun test failed: {str(e)}")
@@ -193,7 +194,7 @@ class TestRerunWithCustomLogic:
     
     def test_rerun_with_state_check(self):
         """Test that checks state before deciding to retry"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -221,8 +222,8 @@ class TestRerunWithCustomLogic:
             
             result = retry_operation()
             Log.info(f"Final result: {result}")
-            assert "Success on attempt 3" in result
-            assert len(attempts) == 3
+            Checker.assert_contains(result, "Success on attempt 3")
+            Checker.assert_equal(len(attempts), 3)
             
         except Exception as e:
             Log.error(f"test_rerun_with_state_check test failed: {str(e)}")
@@ -237,7 +238,7 @@ class TestRerunIntegration:
     
     def test_rerun_with_logging(self):
         """Test that rerun works properly with PTE logging"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -250,10 +251,10 @@ class TestRerunIntegration:
             # Simulate flaky behavior with lower failure rate
             if random.random() < 0.3:
                 Log.warning(f"Test {test_id} failed - will be retried")
-                assert False, f"Test {test_id} failed"
+                Checker.assert_true(False, f"Test {test_id} failed")
             else:
                 Log.info(f"Test {test_id} passed")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_rerun_with_logging test failed: {str(e)}")
@@ -264,16 +265,16 @@ class TestRerunIntegration:
     
     def test_rerun_with_parallel_marker(self):
         """Test that rerun works with parallel execution markers"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_rerun_with_parallel_marker")
         
         try:
-            # 这个测试只是验证并行标记的概念，不需要实际执行
+            # This test only verifies the parallel marker concept, no actual execution needed
             Log.info("Parallel marker test - concept validation only")
-            assert True
+            Checker.assert_true(True)
             
         except Exception as e:
             Log.error(f"test_rerun_with_parallel_marker test failed: {str(e)}")
@@ -284,7 +285,7 @@ class TestRerunIntegration:
     
     def test_parallel_safe_rerun(self):
         """Test that can be run in parallel with rerun"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -294,10 +295,10 @@ class TestRerunIntegration:
             # This test is safe for parallel execution
             if random.random() < 0.4:
                 Log.warning("Parallel test failed - will retry")
-                assert False, "Parallel test failure"
+                Checker.assert_true(False, "Parallel test failure")
             else:
                 Log.info("Parallel test passed")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_parallel_safe_rerun test failed: {str(e)}")
@@ -309,7 +310,7 @@ class TestRerunIntegration:
     @pytest.mark.no_parallel
     def test_sequential_rerun(self):
         """Test that should not run in parallel but can be retried"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -319,10 +320,10 @@ class TestRerunIntegration:
             # This test should not run in parallel but can be retried
             if random.random() < 0.2:  # Lower failure rate for demo
                 Log.warning("Sequential test failed - will retry")
-                assert False, "Sequential test failure"
+                Checker.assert_true(False, "Sequential test failure")
             else:
                 Log.info("Sequential test passed")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_sequential_rerun test failed: {str(e)}")
@@ -337,7 +338,7 @@ class TestRerunErrorHandling:
     
     def test_rerun_with_exception_types(self):
         """Test that rerun handles different exception types correctly"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -355,7 +356,7 @@ class TestRerunErrorHandling:
             
             result = operation_with_specific_exceptions()
             Log.info(f"Operation completed: {result}")
-            assert result == "success"
+            Checker.assert_equal(result, "success")
             
         except Exception as e:
             Log.error(f"test_rerun_with_exception_types test failed: {str(e)}")
@@ -366,7 +367,7 @@ class TestRerunErrorHandling:
     
     def test_rerun_with_custom_exception(self):
         """Test that rerun works with custom exceptions"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -384,7 +385,7 @@ class TestRerunErrorHandling:
             
             result = operation_with_custom_exception()
             Log.info(f"Custom operation completed: {result}")
-            assert result == "success"
+            Checker.assert_equal(result, "success")
             
         except Exception as e:
             Log.error(f"test_rerun_with_custom_exception test failed: {str(e)}")
@@ -399,7 +400,7 @@ class TestRerunPerformance:
     
     def test_rerun_with_timeout(self):
         """Test that rerun respects timeout constraints"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -415,7 +416,7 @@ class TestRerunPerformance:
             
             result = slow_operation()
             Log.info(f"Slow operation completed: {result}")
-            assert result == "success"
+            Checker.assert_equal(result, "success")
             
         except Exception as e:
             Log.error(f"test_rerun_with_timeout test failed: {str(e)}")
@@ -426,7 +427,7 @@ class TestRerunPerformance:
     
     def test_rerun_with_backoff(self):
         """Test that rerun uses exponential backoff"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -452,8 +453,8 @@ class TestRerunPerformance:
             end_time = time.time()
             
             Log.info(f"Operation completed in {end_time - start_time:.2f} seconds")
-            assert result == "success"
-            assert len(attempts) == 3
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(len(attempts), 3)
             
         except Exception as e:
             Log.error(f"test_rerun_with_backoff test failed: {str(e)}")
@@ -468,14 +469,14 @@ class TestRerunBestPractices:
     
     def test_rerun_with_cleanup(self):
         """Test that rerun properly handles cleanup between attempts"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_rerun_with_cleanup")
         
         try:
-            # 简化测试，移除 cleanup 逻辑，因为 PTE retry 不支持 cleanup 参数
+            # Simplified test, removed cleanup logic because PTE retry does not support cleanup parameter
             @retry(max_attempts=2, delay=0.1)
             def operation_with_retry():
                 if random.random() < 0.6:
@@ -485,7 +486,7 @@ class TestRerunBestPractices:
             
             result = operation_with_retry()
             Log.info(f"Operation completed successfully: {result}")
-            assert result == "success"
+            Checker.assert_equal(result, "success")
             
         except Exception as e:
             Log.error(f"test_rerun_with_cleanup test failed: {str(e)}")
@@ -496,7 +497,7 @@ class TestRerunBestPractices:
     
     def test_rerun_with_condition(self):
         """Test that rerun respects custom retry conditions"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -519,7 +520,7 @@ class TestRerunBestPractices:
             
             result = operation_with_condition()
             Log.info(f"Conditional operation completed: {result}")
-            assert result == "success"
+            Checker.assert_equal(result, "success")
             
         except Exception as e:
             Log.error(f"test_rerun_with_condition test failed: {str(e)}")
@@ -530,7 +531,7 @@ class TestRerunBestPractices:
     
     def test_rerun_with_logging_context(self):
         """Test that rerun maintains proper logging context"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -555,8 +556,8 @@ class TestRerunBestPractices:
             duration = time.time() - test_context["start_time"]
             
             Log.info(f"Operation completed in {duration:.2f}s with {test_context['attempt']} attempts")
-            assert "Success on attempt" in result
-            assert test_context["attempt"] >= 1
+            Checker.assert_contains(result, "Success on attempt")
+            Checker.assert_greater_equal(test_context["attempt"], 1)
             
         except Exception as e:
             Log.error(f"test_rerun_with_logging_context test failed: {str(e)}")
@@ -573,7 +574,7 @@ class TestRerunDemoScenarios:
     @pytest.mark.slow
     def test_slow_flaky_test(self):
         """Slow test that is also flaky - demonstrates rerun value"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -584,10 +585,10 @@ class TestRerunDemoScenarios:
             
             if random.random() < 0.4:  # Lower failure rate for demo
                 Log.warning("Slow flaky test failed")
-                assert False, "Slow flaky test failure"
+                Checker.assert_true(False, "Slow flaky test failure")
             else:
                 Log.info("Slow flaky test passed")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_slow_flaky_test test failed: {str(e)}")
@@ -599,7 +600,7 @@ class TestRerunDemoScenarios:
     @pytest.mark.integration
     def test_integration_test_rerun(self):
         """Integration test that might fail due to external dependencies"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -612,7 +613,7 @@ class TestRerunDemoScenarios:
                 raise ConnectionError("External service unavailable")
             else:
                 Log.info("Integration test passed")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_integration_test_rerun test failed: {str(e)}")
@@ -624,7 +625,7 @@ class TestRerunDemoScenarios:
     @pytest.mark.regression
     def test_regression_test_rerun(self):
         """Regression test with rerun capability"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
@@ -634,10 +635,10 @@ class TestRerunDemoScenarios:
             # Simulate regression test that might be flaky
             if random.random() < 0.3:
                 Log.warning("Regression test failed - will retry")
-                assert False, "Regression test failure"
+                Checker.assert_true(False, "Regression test failure")
             else:
                 Log.info("Regression test passed")
-                assert True
+                Checker.assert_true(True)
                 
         except Exception as e:
             Log.error(f"test_regression_test_rerun test failed: {str(e)}")

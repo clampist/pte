@@ -1,6 +1,6 @@
 """
-PTE Retry功能测试
-演示各种retry装饰器的使用方法和效果
+PTE Retry Functionality Tests
+Demonstrates various retry decorator usage methods and effects
 """
 import pytest
 import allure
@@ -19,34 +19,35 @@ from core.retry import (
     RetryStrategy
 )
 from core.logger import Log, generate_logid
+from core.checker import Checker
 
 
 @allure.epic("PTE Framework")
 @allure.feature("Retry Functionality")
 class TestRetryFunctionality:
-    """PTE Retry功能测试类"""
+    """PTE Retry Functionality Test Class"""
     
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test environment"""
-        # 设置LogID
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
     
     @allure.story("Basic Retry Decorator")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_basic_retry_decorator(self):
-        """测试基础retry装饰器"""
-        # 设置LogID
+        """Test basic retry decorator"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_basic_retry_decorator")
         
         try:
-            Log.info("开始测试基础retry装饰器")
+            Log.info("Starting basic retry decorator test")
             
-            # 模拟一个会失败几次的函数
+            # Simulate a function that fails several times
             call_count = 0
             
             @retry(max_attempts=3, delay=0.1, strategy="exponential")
@@ -54,17 +55,17 @@ class TestRetryFunctionality:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ValueError(f"模拟失败 #{call_count}")
+                    raise ValueError(f"Simulated failure #{call_count}")
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = failing_function()
             
-            # 验证结果
-            assert result == "success"
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("基础retry装饰器测试完成")
+            Log.info("Basic retry decorator test completed")
             
         except Exception as e:
             Log.error(f"test_basic_retry_decorator test failed: {str(e)}")
@@ -76,17 +77,17 @@ class TestRetryFunctionality:
     @allure.story("Retry with Condition")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_with_condition(self):
-        """测试带条件的retry装饰器"""
-        # 设置LogID
+        """Test retry decorator with condition"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_with_condition")
         
         try:
-            Log.info("开始测试带条件的retry装饰器")
+            Log.info("Starting retry decorator with condition test")
             
-            # 模拟一个返回不同状态的函数
+            # Simulate a function that returns different statuses
             call_count = 0
             
             @retry_with_condition(
@@ -98,17 +99,17 @@ class TestRetryFunctionality:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 4:
-                    return {"status": "pending", "message": f"处理中 #{call_count}"}
-                return {"status": "ready", "message": "处理完成"}
+                    return {"status": "pending", "message": f"Processing #{call_count}"}
+                return {"status": "ready", "message": "Processing completed"}
             
-            # 执行函数
+            # Execute function
             result = status_check_function()
             
-            # 验证结果
-            assert result["status"] == "ready"
-            assert call_count == 4
+            # Verify result
+            Checker.assert_equal(result["status"], "ready")
+            Checker.assert_equal(call_count, 4)
             
-            Log.info("带条件的retry装饰器测试完成")
+            Log.info("Retry decorator with condition test completed")
             
         except Exception as e:
             Log.error(f"test_retry_with_condition test failed: {str(e)}")
@@ -120,15 +121,15 @@ class TestRetryFunctionality:
     @allure.story("Retry with Dictionary Condition")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_with_dict_condition(self):
-        """测试使用字典条件的retry装饰器"""
-        # 设置LogID
+        """Test retry decorator using dictionary condition"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_with_dict_condition")
         
         try:
-            Log.info("开始测试字典条件的retry装饰器")
+            Log.info("Starting retry decorator with dictionary condition test")
             
             call_count = 0
             
@@ -144,15 +145,15 @@ class TestRetryFunctionality:
                     return {"status": "processing", "progress": call_count * 30}
                 return {"status": "completed", "progress": 100}
             
-            # 执行函数
+            # Execute function
             result = dict_condition_function()
             
-            # 验证结果
-            assert result["status"] == "completed"
-            assert result["progress"] == 100
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result["status"], "completed")
+            Checker.assert_equal(result["progress"], 100)
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("字典条件的retry装饰器测试完成")
+            Log.info("Retry decorator with dictionary condition test completed")
             
         except Exception as e:
             Log.error(f"test_retry_with_dict_condition test failed: {str(e)}")
@@ -164,15 +165,15 @@ class TestRetryFunctionality:
     @allure.story("Retry with Operators")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_with_operators(self):
-        """测试使用操作符的retry装饰器"""
-        # 设置LogID
+        """Test retry decorator using operators"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_with_operators")
         
         try:
-            Log.info("开始测试操作符的retry装饰器")
+            Log.info("Starting retry decorator with operators test")
             
             call_count = 0
             
@@ -186,14 +187,14 @@ class TestRetryFunctionality:
                 call_count += 1
                 return call_count
             
-            # 执行函数
+            # Execute function
             result = operator_condition_function()
             
-            # 验证结果
-            assert result > 5
-            assert call_count == 6
+            # Verify result
+            Checker.assert_greater_than(result, 5)
+            Checker.assert_equal(call_count, 6)
             
-            Log.info("操作符的retry装饰器测试完成")
+            Log.info("Retry decorator with operators test completed")
             
         except Exception as e:
             Log.error(f"test_retry_with_operators test failed: {str(e)}")
@@ -205,15 +206,15 @@ class TestRetryFunctionality:
     @allure.story("Retry on Exception")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_on_exception(self):
-        """测试异常重试装饰器"""
-        # 设置LogID
+        """Test exception retry decorator"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_on_exception")
         
         try:
-            Log.info("开始测试异常重试装饰器")
+            Log.info("Starting exception retry decorator test")
             
             call_count = 0
             
@@ -226,17 +227,17 @@ class TestRetryFunctionality:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ValueError(f"异常 #{call_count}")
+                    raise ValueError(f"Exception #{call_count}")
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = exception_function()
             
-            # 验证结果
-            assert result == "success"
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("异常重试装饰器测试完成")
+            Log.info("Exception retry decorator test completed")
             
         except Exception as e:
             Log.error(f"test_retry_on_exception test failed: {str(e)}")
@@ -248,15 +249,15 @@ class TestRetryFunctionality:
     @allure.story("Retry on False")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_on_false(self):
-        """测试False值重试装饰器"""
-        # 设置LogID
+        """Test False value retry decorator"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_on_false")
         
         try:
-            Log.info("开始测试False值重试装饰器")
+            Log.info("Starting False value retry decorator test")
             
             call_count = 0
             
@@ -268,14 +269,14 @@ class TestRetryFunctionality:
                     return False
                 return True
             
-            # 执行函数
+            # Execute function
             result = false_function()
             
-            # 验证结果
-            assert result is True
-            assert call_count == 3
+            # Verify result
+            Checker.assert_true(result is True)
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("False值重试装饰器测试完成")
+            Log.info("False value retry decorator test completed")
             
         except Exception as e:
             Log.error(f"test_retry_on_false test failed: {str(e)}")
@@ -287,15 +288,15 @@ class TestRetryFunctionality:
     @allure.story("Retry on None")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_on_none(self):
-        """测试None值重试装饰器"""
-        # 设置LogID
+        """Test None value retry decorator"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_on_none")
         
         try:
-            Log.info("开始测试None值重试装饰器")
+            Log.info("Starting None value retry decorator test")
             
             call_count = 0
             
@@ -307,14 +308,14 @@ class TestRetryFunctionality:
                     return None
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = none_function()
             
-            # 验证结果
-            assert result == "success"
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("None值重试装饰器测试完成")
+            Log.info("None value retry decorator test completed")
             
         except Exception as e:
             Log.error(f"test_retry_on_none test failed: {str(e)}")
@@ -326,15 +327,15 @@ class TestRetryFunctionality:
     @allure.story("Retry on Empty")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_on_empty(self):
-        """测试空值重试装饰器"""
-        # 设置LogID
+        """Test empty value retry decorator"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_on_empty")
         
         try:
-            Log.info("开始测试空值重试装饰器")
+            Log.info("Starting empty value retry decorator test")
             
             call_count = 0
             
@@ -346,14 +347,14 @@ class TestRetryFunctionality:
                     return []
                 return [1, 2, 3]
             
-            # 执行函数
+            # Execute function
             result = empty_function()
             
-            # 验证结果
-            assert result == [1, 2, 3]
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result, [1, 2, 3])
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("空值重试装饰器测试完成")
+            Log.info("Empty value retry decorator test completed")
             
         except Exception as e:
             Log.error(f"test_retry_on_empty test failed: {str(e)}")
@@ -365,17 +366,17 @@ class TestRetryFunctionality:
     @allure.story("Retry Strategies")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_strategies(self):
-        """测试重试策略"""
-        # 设置LogID
+        """Test retry strategies"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_strategies")
         
         try:
-            Log.info("开始测试重试策略")
+            Log.info("Starting retry strategies test")
             
-            # 测试固定延迟策略
+            # Test fixed delay strategy
             call_count = 0
             
             @retry(max_attempts=3, delay=0.1, strategy="fixed")
@@ -383,17 +384,17 @@ class TestRetryFunctionality:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ValueError(f"失败 #{call_count}")
+                    raise ValueError(f"Failure #{call_count}")
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = fixed_strategy_function()
             
-            # 验证结果
-            assert result == "success"
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(call_count, 3)
             
-            # 测试指数退避策略
+            # Test exponential backoff strategy
             call_count = 0
             
             @retry(max_attempts=3, delay=0.1, strategy="exponential")
@@ -401,17 +402,17 @@ class TestRetryFunctionality:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ValueError(f"失败 #{call_count}")
+                    raise ValueError(f"Failure #{call_count}")
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = exponential_strategy_function()
             
-            # 验证结果
-            assert result == "success"
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("重试策略测试完成")
+            Log.info("Retry strategies test completed")
             
         except Exception as e:
             Log.error(f"test_retry_strategies test failed: {str(e)}")
@@ -423,28 +424,28 @@ class TestRetryFunctionality:
     @allure.story("Retry Timeout")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_timeout(self):
-        """测试重试超时"""
-        # 设置LogID
+        """Test retry timeout"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_timeout")
         
         try:
-            Log.info("开始测试重试超时")
+            Log.info("Starting retry timeout test")
             
             @retry_on_timeout(timeout=0.5, max_attempts=3, delay=0.1)
             def timeout_function():
-                time.sleep(0.6)  # 超过超时时间
+                time.sleep(0.6)  # Exceed timeout
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = timeout_function()
             
-            # 验证结果
-            assert result == "success"
+            # Verify result
+            Checker.assert_equal(result, "success")
             
-            Log.info("重试超时测试完成")
+            Log.info("Retry timeout test completed")
             
         except Exception as e:
             Log.error(f"test_retry_timeout test failed: {str(e)}")
@@ -456,15 +457,15 @@ class TestRetryFunctionality:
     @allure.story("Retry Until Success")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_until_success(self):
-        """测试重试直到成功"""
-        # 设置LogID
+        """Test retry until success"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_until_success")
         
         try:
-            Log.info("开始测试重试直到成功")
+            Log.info("Starting retry until success test")
             
             call_count = 0
             
@@ -473,17 +474,17 @@ class TestRetryFunctionality:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 4:
-                    raise ValueError(f"失败 #{call_count}")
+                    raise ValueError(f"Failure #{call_count}")
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = until_success_function()
             
-            # 验证结果
-            assert result == "success"
-            assert call_count == 4
+            # Verify result
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(call_count, 4)
             
-            Log.info("重试直到成功测试完成")
+            Log.info("Retry until success test completed")
             
         except Exception as e:
             Log.error(f"test_retry_until_success test failed: {str(e)}")
@@ -495,15 +496,15 @@ class TestRetryFunctionality:
     @allure.story("Retry Logging")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_retry_logging(self):
-        """测试重试日志记录"""
-        # 设置LogID
+        """Test retry logging"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_retry_logging")
         
         try:
-            Log.info("开始测试重试日志记录")
+            Log.info("Starting retry logging test")
             
             call_count = 0
             
@@ -512,17 +513,17 @@ class TestRetryFunctionality:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise ValueError(f"失败 #{call_count}")
+                    raise ValueError(f"Failure #{call_count}")
                 return "success"
             
-            # 执行函数
+            # Execute function
             result = logging_function()
             
-            # 验证结果
-            assert result == "success"
-            assert call_count == 3
+            # Verify result
+            Checker.assert_equal(result, "success")
+            Checker.assert_equal(call_count, 3)
             
-            Log.info("重试日志记录测试完成")
+            Log.info("Retry logging test completed")
             
         except Exception as e:
             Log.error(f"test_retry_logging test failed: {str(e)}")
@@ -534,17 +535,17 @@ class TestRetryFunctionality:
     @allure.story("Complex Retry Scenario")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_complex_retry_scenario(self):
-        """测试复杂重试场景"""
-        # 设置LogID
+        """Test complex retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_complex_retry_scenario")
         
         try:
-            Log.info("开始测试复杂重试场景")
+            Log.info("Starting complex retry scenario test")
             
-            # 模拟复杂的业务场景
+            # Simulate complex business scenario
             step_count = 0
             
             @retry_on_exception(
@@ -557,22 +558,22 @@ class TestRetryFunctionality:
                 nonlocal step_count
                 step_count += 1
                 
-                # 模拟不同的失败情况
+                # Simulate different failure scenarios
                 if step_count == 1:
-                    raise ValueError("第一步失败")
+                    raise ValueError("Step 1 failed")
                 elif step_count == 2:
-                    raise RuntimeError("第二步失败")
+                    raise RuntimeError("Step 2 failed")
                 
                 return {"status": "success", "steps": step_count}
             
-            # 执行函数
+            # Execute function
             result = complex_function()
             
-            # 验证结果
-            assert result["status"] == "success"
-            assert result["steps"] == 3
+            # Verify result
+            Checker.assert_equal(result["status"], "success")
+            Checker.assert_equal(result["steps"], 3)
             
-            Log.info("复杂重试场景测试完成")
+            Log.info("Complex retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_complex_retry_scenario test failed: {str(e)}")

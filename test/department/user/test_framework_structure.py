@@ -33,11 +33,11 @@ class TestFrameworkStructureDemo:
     @allure.severity(allure.severity_level.CRITICAL)
     def test_framework_layers_demo(self):
         """Demonstrate framework layered structure"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_framework_layers_demo")
         
         try:
@@ -72,18 +72,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_framework_layers_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_framework_layers_demo", "PASSED")
     
     @allure.story("Configuration Loading")
     @allure.severity(allure.severity_level.NORMAL)
     def test_configuration_loading_demo(self):
         """Demonstrate configuration loading functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_configuration_loading_demo")
         
         try:
@@ -117,18 +117,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_configuration_loading_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_configuration_loading_demo", "PASSED")
     
     @allure.story("Data Checker")
     @allure.severity(allure.severity_level.NORMAL)
     def test_data_checker_demo(self):
         """Demonstrate data checker functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_data_checker_demo")
         
         try:
@@ -163,18 +163,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_data_checker_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_data_checker_demo", "PASSED")
     
     @allure.story("API Client")
     @allure.severity(allure.severity_level.NORMAL)
     def test_api_client_demo(self):
         """Demonstrate API client functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_client_demo")
         
         try:
@@ -206,18 +206,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_api_client_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_client_demo", "PASSED")
     
     @allure.story("Business Operations")
     @allure.severity(allure.severity_level.NORMAL)
     def test_business_operations_demo(self):
         """Demonstrate business operations functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_business_operations_demo")
         
         try:
@@ -249,18 +249,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_business_operations_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_business_operations_demo", "PASSED")
     
     @allure.story("Test Data")
     @allure.severity(allure.severity_level.NORMAL)
     def test_test_data_demo(self):
         """Demonstrate test data functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_test_data_demo")
         
         try:
@@ -304,18 +304,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_test_data_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_test_data_demo", "PASSED")
     
     @allure.story("Environment Switching")
     @allure.severity(allure.severity_level.NORMAL)
     def test_environment_switching_demo(self):
         """Demonstrate environment switching functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_environment_switching_demo")
         
         try:
@@ -350,18 +350,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_environment_switching_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_environment_switching_demo", "PASSED")
     
     @allure.story("Framework Integration")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_framework_integration_demo(self):
         """Demonstrate framework integration functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_framework_integration_demo")
         
         try:
@@ -391,18 +391,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_framework_integration_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_framework_integration_demo", "PASSED")
     
     @allure.story("Error Handling")
     @allure.severity(allure.severity_level.NORMAL)
     def test_error_handling_demo(self):
         """Demonstrate error handling functionality"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_error_handling_demo")
         
         try:
@@ -439,18 +439,18 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_error_handling_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_error_handling_demo", "PASSED")
     
     @allure.story("Framework Extensibility")
     @allure.severity(allure.severity_level.NORMAL)
     def test_framework_extensibility_demo(self):
         """Demonstrate framework extensibility"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_framework_extensibility_demo")
         
         try:
@@ -485,5 +485,5 @@ class TestFrameworkStructureDemo:
             Log.end_test("test_framework_extensibility_demo", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_framework_extensibility_demo", "PASSED")

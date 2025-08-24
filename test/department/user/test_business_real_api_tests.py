@@ -35,11 +35,11 @@ class TestBusinessRealAPI:
     @allure.severity(allure.severity_level.CRITICAL)
     def test_real_api_connection(self):
         """Test real API connection"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_real_api_connection")
         
         try:
@@ -83,18 +83,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_real_api_connection", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_real_api_connection", "PASSED")
     
     @allure.story("User Creation API")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_creation_api(self):
         """Test user creation via real API"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_creation_api")
         
         try:
@@ -134,18 +134,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_user_creation_api", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_creation_api", "PASSED")
     
     @allure.story("User Retrieval API")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_retrieval_api(self):
         """Test user retrieval via real API"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_retrieval_api")
         
         try:
@@ -184,18 +184,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_user_retrieval_api", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_retrieval_api", "PASSED")
     
     @allure.story("User Update API")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_update_api(self):
         """Test user update via real API"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_update_api")
         
         try:
@@ -236,18 +236,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_user_update_api", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_update_api", "PASSED")
     
     @allure.story("User Deletion API")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_deletion_api(self):
         """Test user deletion via real API"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_user_deletion_api")
         
         try:
@@ -281,18 +281,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_user_deletion_api", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_user_deletion_api", "PASSED")
     
     @allure.story("API Error Handling")
     @allure.severity(allure.severity_level.NORMAL)
     def test_api_error_handling(self):
         """Test API error handling"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_error_handling")
         
         try:
@@ -341,18 +341,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_api_error_handling", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_error_handling", "PASSED")
     
     @allure.story("API Response Validation")
     @allure.severity(allure.severity_level.NORMAL)
     def test_api_response_validation(self):
         """Test API response validation"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_response_validation")
         
         try:
@@ -390,18 +390,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_api_response_validation", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_response_validation", "PASSED")
     
     @allure.story("API Authentication")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_api_authentication(self):
         """Test API authentication"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_authentication")
         
         try:
@@ -443,18 +443,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_api_authentication", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_authentication", "PASSED")
     
     @allure.story("API Performance")
     @allure.severity(allure.severity_level.NORMAL)
     def test_api_performance(self):
         """Test API performance"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_performance")
         
         try:
@@ -490,18 +490,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_api_performance", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_performance", "PASSED")
     
     @allure.story("API Integration")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_api_integration(self):
         """Test API integration with business logic"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_integration")
         
         try:
@@ -540,18 +540,18 @@ class TestBusinessRealAPI:
             Log.end_test("test_api_integration", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_integration", "PASSED")
     
     @allure.story("API Security")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_api_security(self):
         """Test API security features"""
-        # 第1步：设置 LogID
+        # Step 1: Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
-        # 第2步：开始测试
+        # Step 2: Start test
         Log.start_test("test_api_security")
         
         try:
@@ -589,5 +589,5 @@ class TestBusinessRealAPI:
             Log.end_test("test_api_security", "FAILED")
             raise
         else:
-            # 最后一步：结束测试
+            # Final step: End test
             Log.end_test("test_api_security", "PASSED")
