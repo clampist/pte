@@ -1,0 +1,125 @@
+# 通用配置文件 - 包含日志、报告等通用配置
+
+# 日志配置
+logging:
+  # 是否启用文件日志输出
+  enable_file_logging: true
+  
+  # 日志文件配置
+  file:
+    # 日志文件目录 (相对于项目根目录)
+    directory: "logs"
+    
+    # 日志文件名格式 (支持时间变量)
+    # 可用变量: {date}, {time}, {datetime}, {level}
+    # {date}: YYYYMMDD 格式的日期
+    # {time}: HHMMSS 格式的时间
+    # {datetime}: YYYYMMDD_HHMMSS 格式的日期时间
+    filename_format: "pte_{datetime}_{level}.log"
+    
+    # 日志级别 (DEBUG, INFO, WARNING, ERROR)
+    level: "INFO"
+    
+    # 日志格式
+    format: "[{timestamp}] [{level}] [{logid}] [{caller}] {message}"
+    
+    # 是否按日期分割日志文件
+    rotate_by_date: true
+    
+    # 是否按日志级别分别输出文件
+    separate_by_level: false
+    
+    # 日志文件保留天数 (0表示不删除)
+    retention_days: 30
+    
+    # 日志文件最大大小 (MB, 0表示不限制)
+    max_size_mb: 100
+    
+    # 是否启用日志压缩
+    enable_compression: false
+  
+  # 控制台输出配置
+  console:
+    # 是否启用控制台输出
+    enabled: true
+    
+    # 控制台日志级别
+    level: "ERROR"
+    
+    # 控制台日志格式
+    format: "[{timestamp}] [{level}] [{logid}] [{caller}] {message}"
+  
+  # Allure报告配置
+  allure:
+    # 是否启用Allure日志输出
+    enabled: true
+    
+    # Allure日志级别
+    level: "INFO"
+    
+    # 是否在Allure中显示详细数据
+    show_detailed_data: true
+
+# 报告配置
+reporting:
+  # Allure报告配置
+  allure:
+    # 报告输出目录
+    output_dir: "reports/allure"
+    
+    # 是否自动生成报告
+    auto_generate: true
+    
+    # 报告标题
+    title: "PTE Test Report"
+  
+  # 覆盖率报告配置
+  coverage:
+    # 覆盖率报告输出目录
+    output_dir: "reports/coverage"
+    
+    # 是否生成HTML报告
+    generate_html: true
+    
+    # 是否生成XML报告
+    generate_xml: true
+
+# 测试配置
+test:
+  # 默认超时时间 (秒)
+  default_timeout: 30
+  
+  # 默认重试次数
+  default_retry_count: 3
+  
+  # 并行测试配置
+  parallel:
+    # 是否启用并行测试
+    enabled: false
+    
+    # 并行进程数
+    workers: 2
+    
+    # 并行模式 (processes, threads)
+    mode: "processes"
+  
+  # 数据驱动配置
+  data_driven:
+    # 测试数据目录
+    data_dir: "data"
+    
+    # 是否启用数据驱动测试
+    enabled: true
+
+# 环境配置
+environment:
+  # 默认环境
+  default: "local"
+  
+  # 环境列表
+  available:
+    - "local"
+    - "dev"
+    - "test"
+    - "staging"
+    - "prod"

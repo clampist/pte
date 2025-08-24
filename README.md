@@ -310,6 +310,19 @@ pyenv activate pte
 pip install -r requirements.txt
 ```
 
+### 1.5. Install pte Command (Optional)
+```bash
+# Install pte command to system PATH for global access
+./install_pte.sh --install
+source ~/.zshrc  # or restart terminal
+
+# Verify installation
+pte help
+
+# Check installation status
+./install_pte.sh --status
+```
+
 ### 2. Set Up Docker MySQL Environment
 ```bash
 # Start MySQL container
@@ -330,17 +343,18 @@ python config_manager.py show-idc local_test
 
 ### 4. Run Tests
 ```bash
-# Run framework Demo tests
-./run_tests.sh --demo
+# Option 1: Using pte command (after installation)
+pte demo                    # Run framework Demo tests
+pte business                # Run business Case tests
+pte all                     # Run all tests
+pte all --parallel          # Run all tests in parallel
+pte db-test                 # Test database connection
 
-# Run business Case tests
-./run_tests.sh --business
-
-# Run all tests
-./run_tests.sh --all
-
-# Test database connection
-./run_tests.sh --db-test
+# Option 2: Using run_tests.sh script
+./run_tests.sh --demo       # Run framework Demo tests
+./run_tests.sh --business   # Run business Case tests
+./run_tests.sh --all        # Run all tests
+./run_tests.sh --db-test    # Test database connection
 
 # Run real API tests (requires target application to be started first)
 # Please refer to target application documentation: $PTE_TARGET_ROOT/README.md
@@ -434,7 +448,64 @@ python scripts/run_tests_by_category.py --list
 5. **Test Classification**: Separation of framework Demo tests and business Case tests
 6. **Modularity**: Organized by business modules, easy to extend
 7. **Tool Support**: Rich script tools and configuration management tools
-8. **Complete Documentation**: Detailed documentation and usage guides
+8. **Command Line Interface**: Easy-to-use `pte` command for test execution
+9. **Complete Documentation**: Detailed documentation and usage guides
+
+## 💻 Command Line Usage
+
+### Installing pte Command
+
+The PTE framework provides a convenient `pte` command for running tests. You can install it globally:
+
+```bash
+# Install pte command to system PATH
+./install_pte.sh --install
+source ~/.zshrc  # or restart terminal
+
+# Verify installation
+pte help
+```
+
+### Basic Usage
+
+```bash
+# Run all tests
+pte all
+
+# Run tests in parallel
+pte all --parallel
+
+# Run specific test categories
+pte demo                    # Framework demo tests
+pte business                # Business case tests
+
+# Run specific test paths
+pte run test/department/user
+pte run test/department/user/demo_*.py
+
+# Run with pytest options
+pte run test/department/user -v -k "api"
+pte run test/department/user -m "not slow"
+
+# Database and environment tests
+pte db-test                 # Test database connection
+pte mysql-verify            # Verify MySQL environment
+```
+
+### Advanced Usage
+
+```bash
+# Parallel testing with specific worker count
+pte all --parallel=4
+
+# Run specific test method
+pte run test/department/user/demo_framework_structure.py::TestFrameworkStructureDemo::test_api_client_demo
+
+# Run with custom pytest options
+pte run test/department/user -v --tb=short --maxfail=1
+```
+
+For more detailed information, see [Command Line Usage Guide](docs/command_line_usage_guide.md).
 
 ## 🔄 Version History
 
@@ -447,6 +518,7 @@ python scripts/run_tests_by_category.py --list
 - [Test Classification Description](test/department/user/README.md)
 - [Database Integration Documentation](docs/database_integration.md)
 - [Local MySQL Verification Documentation](docs/local_mysql_verification.md)
+- [Command Line Usage Guide](docs/command_line_usage_guide.md)
 - [Target Application Documentation]($PTE_TARGET_ROOT/README.md)
 
 ## 🤝 Contributing Guidelines

@@ -55,8 +55,15 @@ show_help() {
     echo "  mysql-verify         Verify Docker MySQL environment"
     echo "  help                 Show this help information"
     echo ""
+    echo "Parallel Testing Options:"
+    echo "  --parallel           Run tests in parallel (auto-detect CPU cores)"
+    echo "  --parallel=N         Run tests with N parallel workers"
+    echo "  --no-parallel        Disable parallel execution (default)"
+    echo ""
     echo "Examples:"
     echo "  pte run test/department/user                    # Run all tests in user directory"
+    echo "  pte run test/department/user --parallel        # Run tests in parallel"
+    echo "  pte run test/department/user --parallel=4      # Run with 4 parallel workers"
     echo "  pte run test/department/user/demo_*.py         # Run all demo tests"
     echo "  pte run test/department/user/business_*.py     # Run all business tests"
     echo "  pte run test/department/user/demo_framework_structure.py::TestFrameworkStructureDemo::test_api_client_demo"
@@ -79,6 +86,12 @@ show_help() {
     echo "  -x, --exitfirst     Exit instantly on first error or failed test"
     echo "  --pdb               Start the interactive Python debugger on errors"
     echo "  --durations=N       Show N slowest test durations (N=0 for all)"
+    echo ""
+    echo "Parallel Testing Notes:"
+    echo "  - Use @pytest.mark.parallel to mark tests safe for parallel execution"
+    echo "  - Use @pytest.mark.no_parallel to mark tests that should not run in parallel"
+    echo "  - Tests without parallel markers will be auto-detected for safety"
+    echo "  - Database tests and tests with shared state should use no_parallel marker"
     echo ""
     echo "Note: Before running real API tests, please start Flask app using ./start_flask.sh"
     echo ""
@@ -108,6 +121,42 @@ run_pytest() {
     
     print_header "🚀 Running PTE Framework Tests"
     print_info "Test path: $test_path"
+    
+    # Parse parallel options
+    local parallel_workers=""
+    local pytest_options=()
+    
+    # Process arguments to extract parallel options
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --parallel)
+                # Auto-detect CPU cores
+                if command -v nproc >/dev/null 2>&1; then
+                    parallel_workers="$(nproc)"
+                elif command -v sysctl >/dev/null 2>&1; then
+                    parallel_workers="$(sysctl -n hw.ncpu)"
+                else
+                    parallel_workers="4"  # Default fallback
+                fi
+                print_info "Auto-detected parallel workers: $parallel_workers"
+                shift
+                ;;
+            --parallel=*)
+                parallel_workers="${1#--parallel=}"
+                print_info "Using parallel workers: $parallel_workers"
+                shift
+                ;;
+            --no-parallel)
+                parallel_workers=""
+                print_info "Parallel execution disabled"
+                shift
+                ;;
+            *)
+                pytest_options+=("$1")
+                shift
+                ;;
+        esac
+    done
     
     # Handle different path types and validate existence
     local actual_path="$test_path"
@@ -139,31 +188,51 @@ run_pytest() {
         exit 1
     fi
     
-    if [ $# -gt 0 ]; then
-        print_info "Pytest options: $*"
+    if [ ${#pytest_options[@]} -gt 0 ]; then
+        print_info "Pytest options: ${pytest_options[*]}"
     fi
     
     # Build and execute pytest command
     if [[ "$actual_path" == *"*"* ]] || [[ "$actual_path" == *"?"* ]]; then
         # For patterns, let shell expand the wildcards
-        print_command "Executing: pytest $actual_path $([ $# -eq 0 ] && echo '-v' || echo "$*")"
-        echo ""
-        if [ $# -eq 0 ]; then
-            pytest $actual_path -v
-        else
-            pytest $actual_path "$@"
+        local cmd="pytest $actual_path"
+        
+        # Add parallel option if specified
+        if [ -n "$parallel_workers" ]; then
+            cmd="$cmd -n $parallel_workers"
+            print_info "Running tests in parallel with $parallel_workers workers"
         fi
+        
+        # Add pytest options if provided
+        if [ ${#pytest_options[@]} -gt 0 ]; then
+            cmd="$cmd ${pytest_options[*]}"
+        fi
+        
+        # Add default options if no specific options provided
+        if [ ${#pytest_options[@]} -eq 0 ]; then
+            cmd="$cmd -v"
+        fi
+        
+        print_command "Executing: $cmd"
+        echo ""
+        eval "$cmd"
     else
         # For regular paths, quote to handle spaces
         local cmd="pytest \"$actual_path\""
         
+        # Add parallel option if specified
+        if [ -n "$parallel_workers" ]; then
+            cmd="$cmd -n $parallel_workers"
+            print_info "Running tests in parallel with $parallel_workers workers"
+        fi
+        
         # Add pytest options if provided
-        if [ $# -gt 0 ]; then
-            cmd="$cmd $*"
+        if [ ${#pytest_options[@]} -gt 0 ]; then
+            cmd="$cmd ${pytest_options[*]}"
         fi
         
         # Add default options if no specific options provided
-        if [ $# -eq 0 ]; then
+        if [ ${#pytest_options[@]} -eq 0 ]; then
             cmd="$cmd -v"
         fi
         
@@ -188,15 +257,93 @@ run_pytest() {
 
 # Run framework Demo tests
 run_demo_tests() {
+    local parallel_workers=""
+    
+    # Check for parallel options
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --parallel)
+                if command -v nproc >/dev/null 2>&1; then
+                    parallel_workers="$(nproc)"
+                elif command -v sysctl >/dev/null 2>&1; then
+                    parallel_workers="$(sysctl -n hw.ncpu)"
+                else
+                    parallel_workers="4"
+                fi
+                print_info "Auto-detected parallel workers: $parallel_workers"
+                shift
+                ;;
+            --parallel=*)
+                parallel_workers="${1#--parallel=}"
+                print_info "Using parallel workers: $parallel_workers"
+                shift
+                ;;
+            --no-parallel)
+                parallel_workers=""
+                print_info "Parallel execution disabled"
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
     print_header "🚀 Running PTE Framework Demo Tests"
-    python scripts/run_tests_by_category.py --demo
+    
+    if [ -n "$parallel_workers" ]; then
+        print_info "Running demo tests in parallel with $parallel_workers workers"
+        python scripts/run_tests_by_category.py --demo --parallel=$parallel_workers
+    else
+        python scripts/run_tests_by_category.py --demo
+    fi
+    
     print_success "Framework Demo tests completed"
 }
 
 # Run business Case tests
 run_business_tests() {
+    local parallel_workers=""
+    
+    # Check for parallel options
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --parallel)
+                if command -v nproc >/dev/null 2>&1; then
+                    parallel_workers="$(nproc)"
+                elif command -v sysctl >/dev/null 2>&1; then
+                    parallel_workers="$(sysctl -n hw.ncpu)"
+                else
+                    parallel_workers="4"
+                fi
+                print_info "Auto-detected parallel workers: $parallel_workers"
+                shift
+                ;;
+            --parallel=*)
+                parallel_workers="${1#--parallel=}"
+                print_info "Using parallel workers: $parallel_workers"
+                shift
+                ;;
+            --no-parallel)
+                parallel_workers=""
+                print_info "Parallel execution disabled"
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
     print_header "💼 Running Business Case Tests"
-    python scripts/run_tests_by_category.py --business
+    
+    if [ -n "$parallel_workers" ]; then
+        print_info "Running business tests in parallel with $parallel_workers workers"
+        python scripts/run_tests_by_category.py --business --parallel=$parallel_workers
+    else
+        python scripts/run_tests_by_category.py --business
+    fi
+    
     print_success "Business Case tests completed"
 }
 
@@ -224,8 +371,47 @@ run_real_api_tests() {
 
 # Run all tests
 run_all_tests() {
+    local parallel_workers=""
+    
+    # Check for parallel options
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --parallel)
+                if command -v nproc >/dev/null 2>&1; then
+                    parallel_workers="$(nproc)"
+                elif command -v sysctl >/dev/null 2>&1; then
+                    parallel_workers="$(sysctl -n hw.ncpu)"
+                else
+                    parallel_workers="4"
+                fi
+                print_info "Auto-detected parallel workers: $parallel_workers"
+                shift
+                ;;
+            --parallel=*)
+                parallel_workers="${1#--parallel=}"
+                print_info "Using parallel workers: $parallel_workers"
+                shift
+                ;;
+            --no-parallel)
+                parallel_workers=""
+                print_info "Parallel execution disabled"
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
     print_header "🎯 Running All PTE Framework Tests"
-    python scripts/run_tests_by_category.py --all
+    
+    if [ -n "$parallel_workers" ]; then
+        print_info "Running all tests in parallel with $parallel_workers workers"
+        python scripts/run_tests_by_category.py --all --parallel=$parallel_workers
+    else
+        python scripts/run_tests_by_category.py --all
+    fi
+    
     print_success "All tests completed"
 }
 
@@ -268,16 +454,19 @@ main() {
             run_pytest "$test_path" "$@"
             ;;
         demo)
-            run_demo_tests
+            shift  # Remove 'demo' command
+            run_demo_tests "$@"
             ;;
         business)
-            run_business_tests
+            shift  # Remove 'business' command
+            run_business_tests "$@"
             ;;
         real-api)
             run_real_api_tests
             ;;
         all)
-            run_all_tests
+            shift  # Remove 'all' command
+            run_all_tests "$@"
             ;;
         db-test)
             run_db_test

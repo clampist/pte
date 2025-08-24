@@ -19,7 +19,10 @@ class ConfigLoader:
         """
         self.config_dir = Path(__file__).parent
         
-        # Load env.yaml first
+        # Load common.yaml first
+        self.common_config = self._load_common_config()
+        
+        # Load env.yaml
         self.env_config = self._load_env_config()
         
         # Determine IDC name
@@ -28,6 +31,16 @@ class ConfigLoader:
         
         self.idc_name = idc_name
         self.idc_config = self._load_idc_config(idc_name)
+    
+    def _load_common_config(self) -> Dict[str, Any]:
+        """Load common.yaml configuration"""
+        common_file = self.config_dir / "common.yaml"
+        if not common_file.exists():
+            # Return default config if common.yaml doesn't exist
+            return {}
+        
+        with open(common_file, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f)
     
     def _load_env_config(self) -> Dict[str, Any]:
         """Load env.yaml configuration"""
@@ -52,8 +65,13 @@ class ConfigLoader:
     
     def reload_config(self):
         """Reload configuration from files"""
+        self.common_config = self._load_common_config()
         self.env_config = self._load_env_config()
         self.idc_config = self._load_idc_config(self.idc_name)
+    
+    def get_common_config(self) -> Dict[str, Any]:
+        """Get common configuration"""
+        return self.common_config
     
     def get_env_config(self) -> Dict[str, Any]:
         """Get environment configuration"""

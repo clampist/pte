@@ -14,6 +14,15 @@ import hashlib
 import random
 import string
 
+# Import configuration and file logger
+try:
+    from config.settings import _config_loader
+    from core.file_logger import LogFileManager
+except ImportError:
+    # Fallback for when config is not available
+    _config_loader = None
+    LogFileManager = None
+
 
 class LogIdGenerator:
     """Generate unique 32-character logid for tracing"""
@@ -52,11 +61,11 @@ class PTELogger:
         """Initialize logger"""
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
-        self.logid = logid or LogIdGenerator.generate_logid()
+        self._logid = logid or LogIdGenerator.generate_logid()
         
         # Initialize accumulated logs for this logid
-        if self.logid not in self._accumulated_logs:
-            self._accumulated_logs[self.logid] = {
+        if self._logid not in self._accumulated_logs:
+            self._accumulated_logs[self._logid] = {
                 'INFO': [],
                 'WARNING': [],
                 'ERROR': [],
@@ -67,63 +76,157 @@ class PTELogger:
         if not self.logger.handlers:
             self._setup_handlers()
     
+    @property
+    def logid(self):
+        """Get current logid"""
+        return self._logid
+    
+    @logid.setter
+    def logid(self, value):
+        """Set logid and update accumulated logs"""
+        if self._logid != value:
+            # Remove old logid from accumulated logs
+            if self._logid in self._accumulated_logs:
+                del self._accumulated_logs[self._logid]
+            
+            # Set new logid
+            self._logid = value
+            
+            # Initialize accumulated logs for new logid
+            if self._logid not in self._accumulated_logs:
+                self._accumulated_logs[self._logid] = {
+                    'INFO': [],
+                    'WARNING': [],
+                    'ERROR': [],
+                    'DEBUG': []
+                }
+            
+            # Recreate handlers for new logid
+            self._recreate_handlers()
+    
+    def _recreate_handlers(self):
+        """Recreate handlers for current logid"""
+        # Remove existing handlers
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        
+        # Recreate handlers
+        self._setup_handlers()
+    
     def _setup_handlers(self):
         """Setup logging handlers"""
-        # Console handler - only for ERROR level
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.ERROR)  # Only show ERROR level in console
+        # Get logging configuration
+        logging_config = self._get_logging_config()
         
-        # Create custom formatter with real caller info
-        class CallerFormatter(logging.Formatter):
-            def format(self, record):
-                # Get real caller info (skip logger methods)
-                caller_info = self._get_caller_info()
-                record.caller_info = caller_info
+        # Console handler
+        if logging_config.get('console', {}).get('enabled', True):
+            console_level = getattr(logging, logging_config.get('console', {}).get('level', 'ERROR'))
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(console_level)
+            
+            # Create custom formatter with real caller info
+            class CallerFormatter(logging.Formatter):
+                def format(self, record):
+                    # Get real caller info (skip logger methods)
+                    caller_info = self._get_caller_info()
+                    record.caller_info = caller_info
+                    
+                    # Format: [时间戳] [INFO等级别] [LogId] [文件名：行号] [日志内容]
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    return f"[{timestamp}] [{record.levelname}] [{record.logid}] [{record.caller_info}] {record.getMessage()}"
                 
-                # Format: [时间戳] [INFO等级别] [LogId] [文件名：行号] [日志内容]
-                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                return f"[{timestamp}] [{record.levelname}] [{record.logid}] [{record.caller_info}] {record.getMessage()}"
+                def _get_caller_info(self):
+                    """Get the real caller info, skipping logger methods"""
+                    for frame_info in inspect.stack():
+                        filename = frame_info.filename
+                        lineno = frame_info.lineno
+                        # Skip logger.py and find the real caller
+                        if 'logger.py' not in filename and 'test' in filename:
+                            return f"{os.path.basename(filename)}:{lineno}"
+                    return "unknown:0"
             
-            def _get_caller_info(self):
-                """Get the real caller info, skipping logger methods"""
-                for frame_info in inspect.stack():
-                    filename = frame_info.filename
-                    lineno = frame_info.lineno
-                    # Skip logger.py and find the real caller
-                    if 'logger.py' not in filename and 'test' in filename:
-                        return f"{os.path.basename(filename)}:{lineno}"
-                return "unknown:0"
-        
-        # Add logid to log record
-        class LogRecord(logging.LogRecord):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self.logid = getattr(self, 'logid', 'N/A')
-        
-        # Custom filter to add logid
-        class LogIdFilter(logging.Filter):
-            def __init__(self, logid):
-                super().__init__()
-                self.logid = logid
+            # Custom filter to add logid
+            class LogIdFilter(logging.Filter):
+                def __init__(self, logger_instance):
+                    super().__init__()
+                    self.logger_instance = logger_instance
+                
+                def filter(self, record):
+                    record.logid = self.logger_instance.logid
+                    return True
             
-            def filter(self, record):
-                record.logid = self.logid
-                return True
+            console_handler.addFilter(LogIdFilter(self))
+            console_handler.setFormatter(CallerFormatter())
+            
+            # Add console handler
+            self.logger.addHandler(console_handler)
         
-        console_handler.addFilter(LogIdFilter(self.logid))
-        console_handler.setFormatter(CallerFormatter())
+        # File handler
+        if logging_config.get('enable_file_logging', False) and LogFileManager:
+            try:
+                self.file_manager = LogFileManager(logging_config)
+                handlers = self.file_manager.get_handlers()
+                
+                # Add LogID filter to file handlers
+                for handler in handlers.values():
+                    # Add LogID filter to file handlers
+                    class LogIdFilter(logging.Filter):
+                        def __init__(self, logger_instance):
+                            super().__init__()
+                            self.logger_instance = logger_instance
+                        
+                        def filter(self, record):
+                            record.logid = self.logger_instance.logid
+                            return True
+                    
+                    handler.addFilter(LogIdFilter(self))
+                
+                self.file_manager.add_handlers_to_logger(self.logger)
+            except Exception as e:
+                # Fallback: log error to console
+                print(f"Warning: Failed to setup file logging: {e}")
+    
+    def _get_logging_config(self) -> Dict[str, Any]:
+        """Get logging configuration from common.yaml"""
+        if _config_loader:
+            try:
+                common_config = _config_loader.get_common_config()
+                return common_config.get('logging', {})
+            except Exception:
+                pass
         
-        # Add handler
-        self.logger.addHandler(console_handler)
+        # Return default configuration
+        return {
+            'enable_file_logging': False,
+            'console': {
+                'enabled': True,
+                'level': 'ERROR'
+            },
+            'file': {
+                'directory': 'logs',
+                'filename_format': 'pte_{date}_{level}.log',
+                'level': 'INFO',
+                'format': '[{timestamp}] [{level}] [{logid}] [{caller}] {message}',
+                'rotate_by_date': True,
+                'separate_by_level': False,
+                'retention_days': 30,
+                'max_size_mb': 100,
+                'enable_compression': False
+            }
+        }
     
     def _log_to_allure(self, level: str, message: str, data: Optional[Dict] = None):
-        """Log to Allure with logid - optimized format"""
-        # Get real caller info for Allure logs
+        """Log to Allure and file with logid - optimized format"""
+        # Get real caller info for logs
         caller_info = self._get_caller_info()
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         # Format: [时间戳] [INFO等级别] [LogId] [文件名：行号] [日志内容]
         log_entry = f"[{timestamp}] [{level.upper()}] [{self.logid}] [{caller_info}] {message}"
+        
+        # Log to file using standard logging
+        log_level = getattr(logging, level.upper())
+        self.logger.log(log_level, message)
         
         # Add data as separate attachment if provided
         if data:
@@ -301,18 +404,32 @@ class TestLogger:
         self.test_class_name = test_class_name
         self.test_start_time = None
     
+    @property
+    def logid(self):
+        """Get current logid"""
+        return self._logid
+    
+    @logid.setter
+    def logid(self, value):
+        """Set logid and update logger"""
+        self._logid = value
+        if hasattr(self, 'logger'):
+            self.logger.logid = value
+    
     def start_test(self, test_method_name: str):
         """Start test logging with logid"""
         self.test_start_time = datetime.now()
         test_name = f"{self.test_class_name}.{test_method_name}"
         self.logger.test_start(test_name)
-        
-        # Add test info to Allure with logid
-        allure.dynamic.description(f"Test: {test_name} [LOGID:{self.logid}]")
-        allure.dynamic.title(f"{test_name} [LOGID:{self.logid}]")
-        
-        # Add logid as Allure parameter
-        allure.dynamic.parameter("logid", self.logid)
+    
+    def _add_logid_attachment(self, test_name: str):
+        """Add LogID attachment to Allure report"""
+        # Add LogID as Allure attachment (simple format)
+        allure.attach(
+            f"LogID: {self.logid}",
+            "logId",
+            allure.attachment_type.TEXT
+        )
     
     def end_test(self, test_method_name: str, status: str = "PASSED"):
         """End test logging with logid"""
@@ -394,6 +511,9 @@ class Log:
         """Get or create logger instance with current LogID"""
         if cls._logger_instance is None:
             cls._logger_instance = TestLogger("PTE", logid=cls._current_logid)
+            # Add LogID attachment when creating logger instance
+            if cls._current_logid:
+                cls._logger_instance._add_logid_attachment("auto_generated")
         return cls._logger_instance
     
     @classmethod
@@ -402,6 +522,8 @@ class Log:
         cls._current_logid = logid
         if cls._logger_instance:
             cls._logger_instance.logid = logid
+            # Add LogID attachment when setting logid
+            cls._logger_instance._add_logid_attachment("auto_generated")
     
     @classmethod
     def get_logid(cls) -> str:
@@ -411,6 +533,8 @@ class Log:
             # Update logger instance if it exists
             if cls._logger_instance:
                 cls._logger_instance.logid = cls._current_logid
+                # Add LogID attachment when auto-generating logid
+                cls._logger_instance._add_logid_attachment("auto_generated")
         return cls._current_logid
     
     @classmethod
