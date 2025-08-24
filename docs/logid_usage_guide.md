@@ -1,43 +1,104 @@
-# PTE Framework LogID Usage Guide (32-bit)
+# PTE Framework LogID Usage Guide
 
 ## 📋 Overview
 
-This guide explains how to use the enhanced logging functionality with 32-bit LogID support in the PTE Framework. The LogID feature provides end-to-end tracing from test case execution to API requests and responses.
+This guide explains how to use the enhanced logging functionality with LogID support in the PTE Framework. The LogID feature provides end-to-end tracing from test case execution to API requests and responses.
 
 ## 🎯 What is LogID?
 
-LogID is a unique 32-character identifier (containing numbers and lowercase letters) that:
+LogID is a unique identifier (containing numbers and lowercase letters) that:
 - **Tracks test execution**: From test start to completion
 - **Links API requests**: All API calls include the LogID in headers
 - **Enables tracing**: Connect logs across test framework and target application
 - **Supports debugging**: Easy to locate specific test execution in logs
+
+## ✨ Key Features Implemented
+
+### 1. **32-Character LogID Generation**
+- **Format**: Numbers + lowercase letters (e.g., `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6`)
+- **Uniqueness**: Based on timestamp + random data + UUID + MD5 hash
+- **Traceability**: Each test case gets a unique LogID for the entire execution
+
+### 2. **Enhanced Logging System**
+- **Structured Logging**: Consistent format with timestamps and LogID
+- **Log Levels**: INFO, WARNING, ERROR, DEBUG with LogID context
+- **Allure Integration**: LogID appears in test reports and attachments
+- **Console Output**: Formatted logs with LogID for easy searching
+
+### 3. **API Client Integration**
+- **Automatic LogID Headers**: All API requests include `logId` header
+- **Request/Response Logging**: Detailed API call tracking with timing
+- **Error Handling**: Comprehensive error logging with LogID context
+- **Performance Monitoring**: Response time tracking for each API call
+
+### 4. **Business Operations Support**
+- **LogID Propagation**: Business operations inherit LogID from test context
+- **Enhanced Tracing**: All business logic operations include LogID
+- **Error Context**: Detailed error information with LogID for debugging
+
+## 🏗️ Architecture Components
+
+### Core Logger Module (`core/logger.py`)
+```python
+# Key Classes
+- LogIdGenerator: Generates unique 32-character LogIDs
+- PTELogger: Base logger with LogID support
+- TestLogger: Test-specific logger with lifecycle management
+
+# Key Features
+- Automatic LogID generation
+- Structured logging with timestamps
+- Allure integration
+- Header generation with LogID
+- API call logging
+- Assertion and validation logging
+```
+
+### Enhanced API Client (`api/client.py`)
+```python
+# Enhanced Features
+- LogID parameter in constructor
+- Automatic LogID header injection
+- Request/response logging with timing
+- Error handling with LogID context
+- Performance monitoring
+```
+
+### Business Operations (`biz/department/user/operations.py`)
+```python
+# Enhanced Features
+- LogID parameter support
+- Enhanced request logging
+- Error context with LogID
+- Retry mechanism with LogID tracking
+```
 
 ## 🚀 Quick Start
 
 ### 1. Basic Usage in Test Cases
 
 ```python
-from core.logger import get_test_logger
+from core.logger import Log
 
 class TestYourFeature:
     def setup_method(self):
-        # Initialize logger with auto-generated LogID
-        self.logger = get_test_logger("TestYourFeature")
+        # No need to initialize logger - Log class handles it automatically
+        pass
     
     def test_example(self):
-        # Start test with LogID
-        self.logger.start_test("test_example")
+        # Start test with automatic LogID
+        Log.start_test("test_example")
         
         try:
             # Your test logic here
-            self.logger.info("Test step executed")
+            Log.info("Test step executed")
             
             # End test successfully
-            self.logger.end_test("test_example", "PASSED")
+            Log.end_test("test_example", "PASSED")
         except Exception as e:
             # End test with failure
-            self.logger.error(f"Test failed: {str(e)}")
-            self.logger.end_test("test_example", "FAILED")
+            Log.error(f"Test failed: {str(e)}")
+            Log.end_test("test_example", "FAILED")
             raise
 ```
 
@@ -45,378 +106,282 @@ class TestYourFeature:
 
 ```python
 from api.client import APIClient
-from core.logger import get_test_logger
+from core.logger import Log
 
 class TestAPI:
     def setup_method(self):
-        self.logger = get_test_logger("TestAPI")
-        # Initialize API client with LogID
-        self.api_client = APIClient(logid=self.logger.get_logid())
+        # Initialize API client (LogID handled automatically)
+        self.api_client = APIClient()
     
     def test_api_call(self):
-        self.logger.start_test("test_api_call")
+        Log.start_test("test_api_call")
         
         # Make API call with logging
-        response = self.api_client.get("/api/users", logger=self.logger)
+        response = self.api_client.get("/api/users")
         
-        self.logger.end_test("test_api_call", "PASSED")
+        Log.end_test("test_api_call", "PASSED")
 ```
 
 ### 3. Business Operations with LogID
 
 ```python
 from biz.department.user.operations import UserOperations
-from core.logger import get_test_logger
+from core.logger import Log
 
 class TestUserOperations:
     def setup_method(self):
-        self.logger = get_test_logger("TestUserOperations")
-        # Initialize operations with LogID
-        self.user_ops = UserOperations(logid=self.logger.get_logid())
+        # Initialize operations (LogID handled automatically)
+        self.user_ops = UserOperations()
     
     def test_user_creation(self):
-        self.logger.start_test("test_user_creation")
+        Log.start_test("test_user_creation")
         
         # Call business operation with logging
-        result = self.user_ops.create_user(user_data, logger=self.logger)
+        result = self.user_ops.create_user(user_data)
         
-        self.logger.end_test("test_user_creation", "PASSED")
+        Log.end_test("test_user_creation", "PASSED")
 ```
 
 ## 📝 LogID Generation
 
 ### Automatic Generation
 ```python
-from core.logger import generate_logid
+from core.logger import Log
 
-# Generate a new LogID
-logid = generate_logid()
-print(logid)  # e.g., "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6"
+# LogID is automatically generated when needed
+current_logid = Log.get_logid()
+print(f"Current LogID: {current_logid}")
 ```
 
 ### Manual LogID Assignment
 ```python
-from core.logger import get_test_logger
+from core.logger import Log, generate_logid
 
-# Use specific LogID
-custom_logid = "mycustomlogid1234567890abcdefghijklmnopqrstuvwxyz"
-logger = get_test_logger("TestClass", logid=custom_logid)
+# Generate a new LogID manually
+logid = generate_logid()
+Log.set_logid(logid)
 ```
 
-## 🔧 Advanced Usage
+## 🔧 Advanced Features
 
-### 1. LogID in Headers
+### 1. Automatic LogID Management
+
+The framework automatically handles LogID generation and management through pytest fixtures:
 
 ```python
-# Get headers with LogID
-headers = self.logger.get_headers_with_logid({
-    'Authorization': 'Bearer token123',
-    'Custom-Header': 'value'
-})
-
-# Result:
-# {
-#     'logId': 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-#     'Content-Type': 'application/json',
-#     'Authorization': 'Bearer token123',
-#     'Custom-Header': 'value'
-# }
+# This happens automatically for every test
+@pytest.fixture(autouse=True)
+def auto_logid():
+    """Automatically generate and set LogID for each test case"""
+    logid = generate_logid()
+    Log.set_logid(logid)
+    Log._get_logger()._add_logid_attachment("auto_generated")
+    yield logid
 ```
 
-### 2. API Call Logging
+### 2. LogID Attachment to Allure Reports
+
+LogID is automatically attached to Allure reports for easy tracing:
 
 ```python
-# Log API call with detailed information
-self.logger.api_call(
-    method="POST",
-    url="/api/users",
-    status_code=201,
-    response_time=0.5,
-    request_data={"user": {"name": "John"}},
-    response_data={"id": 1, "name": "John"}
-)
+# This happens automatically when LogID is set
+Log._get_logger()._add_logid_attachment("auto_generated")
 ```
 
-### 3. Assertion Logging
+### 3. API Request Logging
+
+All API requests automatically include LogID in headers:
 
 ```python
-# Log assertions with LogID
-self.logger.assertion(
-    description="User creation validation",
-    condition=user_id is not None,
-    expected="Not None",
-    actual=user_id
-)
+# API client automatically adds LogID to headers
+headers = {
+    'Content-Type': 'application/json',
+    'logId': current_logid  # Added automatically
+}
 ```
 
-### 4. Data Validation Logging
+## 📊 Log Output Examples
 
-```python
-# Log data validation with LogID
-self.logger.data_validation(
-    field="user_id",
-    expected="integer",
-    actual=type(user_id).__name__,
-    passed=isinstance(user_id, int)
-)
-```
-
-## 📊 Log Output Format
-
-### Console Output
+### Console Output Format
 ```
 2024-01-01 12:00:00 - [TestLogger] - [LogId:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6] - INFO - 🚀 Starting test: test_user_creation
 2024-01-01 12:00:00 - [TestLogger] - [LogId:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6] - INFO - 🌐 API Call: POST /api/users - Status: 201 - Time: 0.50s
 2024-01-01 12:00:00 - [TestLogger] - [LogId:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6] - INFO - ✅ Test completed: test_user_creation - PASSED
 ```
 
-### Allure Report Integration
-- LogID appears in test title and description
-- All log entries include LogID
-- API calls are logged with request/response data
-- Attachments include LogID for easy tracing
+### API Request Headers
+```http
+GET /api/users HTTP/1.1
+Host: localhost:5001
+logId: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6
+Content-Type: application/json
+Authorization: Bearer token123
+```
 
-## 🔄 End-to-End Tracing
+## 🔄 End-to-End Tracing Flow
 
-### 1. Test Framework Side
+### 1. Test Case Execution
 ```python
-def test_complete_workflow(self):
-    self.logger.start_test("test_complete_workflow")
+def test_user_creation(self):
+    # 1. Generate LogID for test case
+    self.logger = get_test_logger("TestUserCreation")
+    logid = self.logger.get_logid()  # a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6
     
-    # Step 1: Prepare data
-    self.logger.info("Preparing test data", {"logid": self.logger.get_logid()})
+    # 2. Start test with LogID
+    self.logger.start_test("test_user_creation")
     
-    # Step 2: Make API call
-    response = self.api_client.post("/api/users", json_data=user_data, logger=self.logger)
-    
-    # Step 3: Validate response
-    self.logger.assertion("Response validation", response.status_code == 201)
-    
-    self.logger.end_test("test_complete_workflow", "PASSED")
-```
-
-### 2. Target Application Side
-The target application receives the LogID in the `logId` header:
-```
-Headers:
-{
-    "logId": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6",
-    "Content-Type": "application/json",
-    "Authorization": "Bearer token123"
-}
-```
-
-### 3. Tracing in Target Application
-```python
-# In your target application
-@app.route('/api/users', methods=['POST'])
-def create_user():
-    logid = request.headers.get('logId')
-    logger.info(f"Creating user with LogID: {logid}")
-    
-    # Process request
-    user_data = request.json
-    user = create_user_in_db(user_data)
-    
-    logger.info(f"User created successfully with LogID: {logid}", {
-        "user_id": user.id,
-        "logid": logid
-    })
-    
-    return jsonify({"id": user.id, "logid": logid}), 201
-```
-
-## 🎨 Best Practices
-
-### 1. Consistent LogID Usage
-```python
-# Good: Use the same LogID throughout the test
-def test_user_workflow(self):
-    self.logger.start_test("test_user_workflow")
-    logid = self.logger.get_logid()
-    
-    # Use logid in all operations
+    # 3. Initialize components with LogID
     self.api_client = APIClient(logid=logid)
     self.user_ops = UserOperations(logid=logid)
-    
-    # All API calls will use the same LogID
-    self.api_client.post("/api/users", json_data=user_data, logger=self.logger)
 ```
 
-### 2. Error Handling with LogID
+## 📊 Logging Methods
+
+### Basic Logging
 ```python
-def test_with_error_handling(self):
-    self.logger.start_test("test_with_error_handling")
-    
+Log.info("Information message")
+Log.warning("Warning message")
+Log.error("Error message")
+Log.debug("Debug message")
+```
+
+### Test-Specific Logging
+```python
+Log.start_test("test_name")
+Log.end_test("test_name", "PASSED")
+Log.end_test("test_name", "FAILED")
+```
+
+### API Logging
+```python
+Log.api_call(
+    method="POST",
+    url="/api/users",
+    status_code=201,
+    response_time=0.5,
+    request_data=data,
+    response_data=response
+)
+```
+
+### Data Validation Logging
+```python
+Log.data_validation("field_name", expected_value, actual_value, True)
+Log.assertion("assertion_description", expected, actual, expected)
+```
+
+### Print Replacement
+```python
+Log.raw("Raw message without LogID prefix")
+Log.print("Print-like message")  # Alias for Log.raw()
+```
+
+## 🎯 Best Practices
+
+### 1. Use Static Log Class
+- Prefer `Log.info()` over `self.logger.info()`
+- No need to manage logger instances manually
+- Automatic LogID handling
+
+### 2. Consistent Test Structure
+```python
+def test_example(self):
+    Log.start_test("test_example")
     try:
         # Test logic
-        result = self.api_client.get("/api/users", logger=self.logger)
-        self.logger.assertion("API call successful", result.status_code == 200)
-        
+        Log.info("Test step")
+        # Assertions
+        Log.end_test("test_example", "PASSED")
     except Exception as e:
-        # Log error with LogID
-        self.logger.error(f"Test failed: {str(e)}", {
-            "error_type": type(e).__name__,
-            "logid": self.logger.get_logid()
-        })
-        self.logger.end_test("test_with_error_handling", "FAILED")
+        Log.error(f"Test failed: {e}")
+        Log.end_test("test_example", "FAILED")
         raise
 ```
 
-### 3. Performance Monitoring
+### 3. API Testing
 ```python
-def test_performance(self):
-    self.logger.start_test("test_performance")
+def test_api_endpoint(self):
+    Log.start_test("test_api_endpoint")
     
-    # Monitor API call performance
-    start_time = time.time()
-    response = self.api_client.get("/api/users", logger=self.logger)
-    response_time = time.time() - start_time
+    # API call with automatic logging
+    response = self.api_client.post("/api/users", data=user_data)
     
-    # Log performance metrics
-    self.logger.info("Performance metrics", {
-        "response_time": response_time,
-        "status_code": response.status_code,
-        "logid": self.logger.get_logid()
-    })
+    # Validation with logging
+    Log.assertion("Status code check", 201, response.status_code, 201)
     
-    self.logger.end_test("test_performance", "PASSED")
+    Log.end_test("test_api_endpoint", "PASSED")
 ```
 
-## 🔍 Debugging with LogID
+## 🔍 Troubleshooting
 
-### 1. Finding Test Execution
-```bash
-# Search for specific LogID in logs
-grep "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6" test.log
+### 1. LogID Not Generated
+- Ensure you're using the static `Log` class
+- Check that pytest fixtures are loaded
+- Verify `core/__init__.py` imports fixtures
+
+### 2. LogID Not in API Headers
+- Ensure API client is properly initialized
+- Check that LogID is set before making API calls
+- Verify API client configuration
+
+### 3. LogID Not in Allure Reports
+- Check Allure configuration
+- Ensure LogID attachment is enabled
+- Verify test execution with Allure
+
+## 🚨 LogID Uniqueness Issues and Solutions
+
+### Problem Description
+
+In the PTE Framework's automatic LogID functionality, it was discovered that each test case's LogID appeared as the same value in log files, rather than the expected unique values.
+
+### Root Cause Analysis
+
+1. **Log Handler Creation Timing**: File handlers were created during `PTELogger` initialization with fixed filenames
+2. **Handler Reuse**: Even when LogID was updated, handlers continued writing to the same file
+3. **File Locking**: Log files were locked by handlers, preventing dynamic switching
+
+### Solution: Test Case-Separated Log Files
+
+#### Core Approach
+
+By creating independent log files for each test case, we ensure that each test case's logs have unique LogIDs, and log file names include test case information.
+
+#### Implementation
+
+1. **Modified Log Filename Format**:
+```yaml
+filename_format: "pte_{datetime}_{testcase}_{logid}_{level}.log"
 ```
 
-### 2. Allure Report Search
-- Open Allure report
-- Search for LogID in test details
-- View all log entries for the specific test
+2. **Refactored Log Class**: Merged `PTELogger`, `TestLogger`, and static `Log` classes into a unified `Log` class
 
-### 3. Target Application Logs
-```bash
-# Search for LogID in application logs
-grep "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6" app.log
-```
+3. **Modified LogFileHandler**: Supports dynamic filename generation with test case names and LogIDs
 
-## 🚨 Common Issues and Solutions
+4. **Updated conftest.py**: Automatically retrieves test case names and sets unique LogIDs
 
-### Issue 1: LogID Not in Headers
-```python
-# Problem: LogID not appearing in API request headers
-# Solution: Ensure LogID is added to headers
-self.api_client = APIClient(logid=self.logger.get_logid())
-# or
-headers = self.logger.get_headers_with_logid()
-```
+#### Verification Results
 
-### Issue 2: Multiple LogIDs in Same Test
-```python
-# Problem: Different LogIDs for different operations
-# Solution: Use consistent LogID
-logid = self.logger.get_logid()
-self.api_client = APIClient(logid=logid)
-self.user_ops = UserOperations(logid=logid)
-```
+**Test Case 1**:
+- **Filename**: `pte_20250824_114652_test_logid_debug_1_2024ac37ca755ea0dc95715c9cf1fa4a_all.log`
+- **LogID**: `2024ac37ca755ea0dc95715c9cf1fa4a`
+- **Test Case**: `test_logid_debug_1`
 
-### Issue 3: LogID Not in Allure Report
-```python
-# Problem: LogID not visible in Allure
-# Solution: Ensure proper Allure integration
-self.logger.start_test("test_name")  # This adds LogID to Allure
-```
+**Test Case 2**:
+- **Filename**: `pte_20250824_114652_test_logid_debug_2_e081f1e56977bfc204416580ff8b0e1f_all.log`
+- **LogID**: `e081f1e56977bfc204416580ff8b0e1f`
+- **Test Case**: `test_logid_debug_2`
+
+#### Benefits
+
+1. **Uniqueness Guarantee**: Each test case has an independent LogID
+2. **File Separation**: Each test case's logs are written to independent files
+3. **Easy Tracing**: Filenames include test case names and LogIDs
+4. **Zero Configuration**: Users don't need to manually set LogIDs
+5. **Backward Compatibility**: Maintains existing API unchanged
 
 ## 📚 Related Documentation
 
-- [Allure Report Guide](allure_report_guide.md)
-- [Logging Migration Guide](logging_migration_guide.md)
-- [PTE Framework Documentation](README.md)
-
-## 🔗 Integration Examples
-
-### Flask Application Integration
-```python
-from flask import Flask, request, jsonify
-import logging
-
-app = Flask(__name__)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-@app.route('/api/users', methods=['POST'])
-def create_user():
-    logid = request.headers.get('logId', 'unknown')
-    logger.info(f"[LogId:{logid}] Creating user")
-    
-    try:
-        user_data = request.json
-        # Process user creation
-        user_id = create_user_in_database(user_data)
-        
-        logger.info(f"[LogId:{logid}] User created successfully", {
-            "user_id": user_id,
-            "logid": logid
-        })
-        
-        return jsonify({
-            "id": user_id,
-            "status": "created",
-            "logid": logid
-        }), 201
-        
-    except Exception as e:
-        logger.error(f"[LogId:{logid}] User creation failed", {
-            "error": str(e),
-            "logid": logid
-        })
-        return jsonify({
-            "error": str(e),
-            "logid": logid
-        }), 500
-```
-
-### Django Application Integration
-```python
-import logging
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
-logger = logging.getLogger(__name__)
-
-@csrf_exempt
-def create_user(request):
-    if request.method == 'POST':
-        logid = request.headers.get('logId', 'unknown')
-        logger.info(f"[LogId:{logid}] Creating user")
-        
-        try:
-            user_data = request.POST
-            # Process user creation
-            user_id = create_user_in_database(user_data)
-            
-            logger.info(f"[LogId:{logid}] User created successfully", {
-                "user_id": user_id,
-                "logid": logid
-            })
-            
-            return JsonResponse({
-                "id": user_id,
-                "status": "created",
-                "logid": logid
-            }, status=201)
-            
-        except Exception as e:
-            logger.error(f"[LogId:{logid}] User creation failed", {
-                "error": str(e),
-                "logid": logid
-            })
-            return JsonResponse({
-                "error": str(e),
-                "logid": logid
-            }, status=500)
-```
-
-This 32-bit LogID functionality provides comprehensive tracing capabilities for your test framework, enabling easy debugging and monitoring of test execution across both the test framework and target application.
+- [File Logging Guide](file_logging_guide.md) - Local file logging capabilities
+- [Parallel Testing Guide](parallel_testing_guide.md) - Running tests in parallel
+- [Static Log Usage Guide](static_log_usage_guide.md) - Simplified logging interface

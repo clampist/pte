@@ -8,6 +8,24 @@ This guide explains how to use the simplified static `Log` class for easy loggin
 
 The static `Log` class provides a simple interface for logging that automatically handles LogID generation and management. You can use it like `Log.info()`, `Log.warn()`, `Log.error()` without worrying about LogID details.
 
+## 🎯 Objectives Achieved
+
+### 1. **Removed LogID Logic Intrusion**
+- ✅ Removed LogID logic from **biz layer** (`operations.py`)
+- ✅ Removed LogID logic from **app layer** (no changes needed)
+- ✅ Removed LogID logic from **test layer** (converted to static Log)
+- ✅ Kept LogID logic in **API layer** only (as requested)
+
+### 2. **Converted to Static Log Usage**
+- ✅ Updated `business_real_api_tests_with_logid.py` to use `Log.xxx` static methods
+- ✅ Removed `self.logger` usage in favor of static `Log` class
+- ✅ Simplified test setup and execution
+
+### 3. **Added Print Replacement**
+- ✅ Added `Log.raw()` method for raw print-like logging
+- ✅ Added `Log.print()` method as alias for `Log.raw()`
+- ✅ Both methods work like original `print()` but with Allure integration
+
 ## 🚀 Quick Start
 
 ### 1. Basic Usage
@@ -94,339 +112,191 @@ class UserBizService:
             raise
 ```
 
+## 🔧 Changes Made
+
+### 1. **Biz Layer Cleanup** (`biz/department/user/operations.py`)
+
+#### Before:
+```python
+def __init__(self, env: str = None, custom_headers: Dict[str, str] = None, logid: str = None):
+    # Generate or use provided logid
+    self.logid = logid or generate_logid()
+    # Add logid to headers
+    self.headers['logId'] = self.logid
+
+def _make_request(self, method: str, endpoint: str, data: Dict = None, 
+                 params: Dict = None, expected_status: int = 200, logger=None):
+    # Log API call if logger is provided
+    if logger:
+        logger.api_call(...)
+```
+
+#### After:
+```python
+def __init__(self, env: str = None, custom_headers: Dict[str, str] = None):
+    # No LogID logic - handled by API layer
+
+def _make_request(self, method: str, endpoint: str, data: Dict = None, 
+                 params: Dict = None, expected_status: int = 200):
+    # Log API call using static Log class
+    from core.logger import Log
+    Log.api_call(...)
+```
+
+### 2. **Test Layer Conversion** (`test/department/user/business_real_api_tests_with_logid.py`)
+
+#### Before:
+```python
+@pytest.fixture(autouse=True)
+def setup(self):
+    # Initialize logger with logid
+    self.logger = get_test_logger("TestBusinessRealAPIWithLogID")
+    # Initialize components with logid
+    self.api_client = APIClient(logid=self.logger.get_logid())
+    self.user_ops = UserOperations(logid=self.logger.get_logid())
+
+def test_real_api_connection_with_logid(self):
+    self.logger.start_test("test_real_api_connection_with_logid")
+    self.logger.info("Starting real API connection test with logid")
+    self.logger.assertion("API client initialization", ...)
+    self.logger.end_test("test_real_api_connection_with_logid", "PASSED")
+```
+
+#### After:
+```python
+@pytest.fixture(autouse=True)
+def setup(self):
+    # No logger initialization needed
+    # Initialize components (no need to pass logid)
+    self.api_client = APIClient()
+    self.user_ops = UserOperations()
+
+def test_real_api_connection_with_static_log(self):
+    Log.start_test("test_real_api_connection_with_static_log")
+    Log.info("Starting real API connection test with static log")
+    Log.assertion("API client initialization", ...)
+    Log.end_test("test_real_api_connection_with_static_log", "PASSED")
+```
+
+### 3. **Static Log Class Enhancement** (`core/logger.py`)
+
+#### Added Methods:
+```python
+@classmethod
+def raw(cls, message: str, *args, **kwargs):
+    """Raw print-like logging without LogID prefix (replaces print())"""
+    # Format message with args and kwargs like print()
+    formatted_message = message
+    if args:
+        formatted_message += " " + " ".join(str(arg) for arg in args)
+    if kwargs:
+        formatted_message += " " + " ".join(f"{k}={v}" for k, v in kwargs.items())
+    
+    # Log without LogID prefix
+    cls._log_without_logid("INFO", formatted_message)
+
+@classmethod
+def print(cls, message: str, *args, **kwargs):
+    """Alias for Log.raw() - print-like logging"""
+    cls.raw(message, *args, **kwargs)
+```
+
 ## 📝 Available Methods
 
 ### Basic Logging
 ```python
-Log.info(message: str, data: Optional[Dict] = None)
-Log.warning(message: str, data: Optional[Dict] = None)
-Log.error(message: str, data: Optional[Dict] = None)
-Log.debug(message: str, data: Optional[Dict] = None)
+Log.info("Information message")
+Log.warning("Warning message")
+Log.error("Error message")
+Log.debug("Debug message")
 ```
 
-### Test Lifecycle
+### Test-Specific Logging
 ```python
-Log.start_test(test_method_name: str)
-Log.end_test(test_method_name: str, status: str = "PASSED")
-Log.test_start(test_name: str)
-Log.test_complete(test_name: str, status: str = "PASSED")
+Log.start_test("test_name")
+Log.end_test("test_name", "PASSED")
+Log.end_test("test_name", "FAILED")
 ```
 
-### Assertions and Validation
+### API Logging
 ```python
-Log.assertion(description: str, condition: bool, expected: Any = None, actual: Any = None)
-Log.data_validation(field: str, expected: Any, actual: Any, passed: bool)
-```
-
-### API Calls
-```python
-Log.api_call(method: str, url: str, status_code: Optional[int] = None, 
-             response_time: Optional[float] = None, request_data: Optional[Dict] = None,
-             response_data: Optional[Dict] = None)
-```
-
-### Headers and LogID
-```python
-Log.get_logid() -> str
-Log.get_headers_with_logid(additional_headers: Optional[Dict] = None) -> Dict[str, str]
-Log.set_logid(logid: str)
-```
-
-### Allure Integration
-```python
-Log.step(step_name: str)  # Returns decorator for Allure steps
-```
-
-## 🔧 Advanced Usage
-
-### 1. Logging with Data
-
-```python
-# Log with structured data
-Log.info("User operation completed", {
-    "user_id": 123,
-    "operation": "create",
-    "status": "success"
-})
-
-# Log errors with context
-Log.error("Database connection failed", {
-    "error_type": "ConnectionError",
-    "database": "users_db",
-    "retry_count": 3
-})
-```
-
-### 2. Assertions with Context
-
-```python
-# Simple assertion
-Log.assertion("User ID validation", user_id is not None)
-
-# Detailed assertion
-Log.assertion(
-    description="User age validation",
-    condition=18 <= user_age <= 100,
-    expected="18-100",
-    actual=user_age
-)
-```
-
-### 3. Data Validation
-
-```python
-# Validate data types
-Log.data_validation("user_id", "integer", type(user_id).__name__, isinstance(user_id, int))
-Log.data_validation("user_name", "string", type(user_name).__name__, isinstance(user_name, str))
-
-# Validate business rules
-Log.data_validation("email_format", "valid_email", "invalid_format", "@" in email)
-```
-
-### 4. API Call Logging
-
-```python
-# Log API calls with details
 Log.api_call(
     method="POST",
     url="/api/users",
     status_code=201,
     response_time=0.5,
-    request_data={"user": {"name": "John"}},
-    response_data={"id": 1, "name": "John"}
+    request_data=data,
+    response_data=response
 )
 ```
 
-### 5. Headers with LogID
-
+### Data Validation Logging
 ```python
-# Get headers with current LogID
-headers = Log.get_headers_with_logid({
-    'Authorization': 'Bearer token123',
-    'Custom-Header': 'value'
-})
-
-# Result:
-# {
-#     'logId': 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
-#     'Content-Type': 'application/json',
-#     'Authorization': 'Bearer token123',
-#     'Custom-Header': 'value'
-# }
+Log.data_validation("field_name", expected_value, actual_value, True)
+Log.assertion("assertion_description", expected, actual, expected)
 ```
 
-## 📊 Log Output Format
-
-### Console Output
-```
-2024-01-01 12:00:00 - [PTELogger] - [LOGID:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6] - INFO - 🚀 Starting test: test_user_creation
-2024-01-01 12:00:00 - [PTELogger] - [LOGID:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6] - INFO - Creating user in app layer
-2024-01-01 12:00:00 - [PTELogger] - [LOGID:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6] - INFO - ✅ Test completed: test_user_creation - PASSED
-```
-
-## 🔄 Automatic LogID Management
-
-### 1. Automatic Generation
-- LogID is automatically generated when first needed
-- Same LogID is used throughout the entire session
-- No need to manually manage LogID
-
-### 2. Session Persistence
+### Print Replacement
 ```python
-# LogID is automatically generated and reused
-logid1 = Log.get_logid()  # First call generates LogID
-logid2 = Log.get_logid()  # Same LogID returned
-assert logid1 == logid2   # True
+Log.raw("Raw message without LogID prefix")
+Log.print("Print-like message")  # Alias for Log.raw()
 ```
 
-### 3. Manual LogID Setting
-```python
-# Set custom LogID if needed
-Log.set_logid("mycustomlogid1234567890abcdefghijklmnopqrstuvwxyz")
-```
+## 🎯 Best Practices
 
-## 🎨 Best Practices
+### 1. Use Static Log Class
+- Prefer `Log.info()` over `self.logger.info()`
+- No need to manage logger instances manually
+- Automatic LogID handling
 
-### 1. Consistent Usage
+### 2. Consistent Test Structure
 ```python
-# Good: Use Log class consistently
-def process_data(self, data):
-    Log.info("Processing data", {"data_size": len(data)})
-    
+def test_example(self):
+    Log.start_test("test_example")
     try:
-        result = self.business_logic(data)
-        Log.info("Data processed successfully", {"result": result})
-        return result
+        # Test logic
+        Log.info("Test step")
+        # Assertions
+        Log.end_test("test_example", "PASSED")
     except Exception as e:
-        Log.error("Data processing failed", {"error": str(e)})
+        Log.error(f"Test failed: {e}")
+        Log.end_test("test_example", "FAILED")
         raise
 ```
 
-### 2. Error Handling
+### 3. API Testing
 ```python
-def risky_operation(self):
-    try:
-        # Risky operation
-        result = self.perform_operation()
-        Log.info("Operation successful", {"result": result})
-        return result
-    except Exception as e:
-        Log.error("Operation failed", {
-            "error_type": type(e).__name__,
-            "error_message": str(e),
-            "operation": "perform_operation"
-        })
-        raise
-```
-
-### 3. Performance Monitoring
-```python
-import time
-
-def monitored_operation(self):
-    start_time = time.time()
+def test_api_endpoint(self):
+    Log.start_test("test_api_endpoint")
     
-    try:
-        result = self.expensive_operation()
-        response_time = time.time() - start_time
-        
-        Log.info("Operation completed", {
-            "response_time": response_time,
-            "result_size": len(result)
-        })
-        return result
-    except Exception as e:
-        response_time = time.time() - start_time
-        Log.error("Operation failed", {
-            "response_time": response_time,
-            "error": str(e)
-        })
-        raise
-```
-
-## 🔍 Debugging with Static Log
-
-### 1. Finding Logs
-```bash
-# Search for specific LogID in logs
-grep "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6" test.log
-```
-
-### 2. Allure Report Integration
-- LogID appears in test title and description
-- All log entries include LogID for easy tracing
-- API calls are logged with request/response data
-- Attachments include LogID for debugging
-
-## 🚨 Common Issues and Solutions
-
-### Issue 1: LogID Changes During Test
-```python
-# Problem: LogID changes during test execution
-# Solution: LogID is automatically managed and consistent
-logid1 = Log.get_logid()
-# ... some operations ...
-logid2 = Log.get_logid()
-assert logid1 == logid2  # Should be True
-```
-
-### Issue 2: Missing LogID in Headers
-```python
-# Problem: LogID not in API request headers
-# Solution: Use Log.get_headers_with_logid()
-headers = Log.get_headers_with_logid()
-# Headers automatically include LogID
-```
-
-### Issue 3: No Logs Appearing
-```python
-# Problem: No logs appearing in output
-# Solution: Ensure proper import and usage
-from core.logger import Log
-Log.info("Test message")  # Should appear in logs
-```
-
-## 📚 Integration Examples
-
-### Flask Application Integration
-```python
-from flask import Flask, request, jsonify
-from core.logger import Log
-
-app = Flask(__name__)
-
-@app.route('/api/users', methods=['POST'])
-def create_user():
-    Log.info("Creating user via API")
+    # API call with automatic logging
+    response = self.api_client.post("/api/users", data=user_data)
     
-    try:
-        user_data = request.json
-        Log.info("User data received", {"user_data": user_data})
-        
-        # Process user creation
-        user_id = create_user_in_database(user_data)
-        
-        Log.info("User created successfully", {"user_id": user_id})
-        
-        return jsonify({
-            "id": user_id,
-            "status": "created"
-        }), 201
-        
-    except Exception as e:
-        Log.error("User creation failed", {"error": str(e)})
-        return jsonify({"error": str(e)}), 500
+    # Validation with logging
+    Log.assertion("Status code check", 201, response.status_code, 201)
+    
+    Log.end_test("test_api_endpoint", "PASSED")
 ```
 
-### Django Application Integration
-```python
-from django.http import JsonResponse
-from core.logger import Log
+## 🔍 Troubleshooting
 
-def create_user(request):
-    if request.method == 'POST':
-        Log.info("Creating user via Django")
-        
-        try:
-            user_data = request.POST
-            Log.info("User data received", {"user_data": user_data})
-            
-            # Process user creation
-            user_id = create_user_in_database(user_data)
-            
-            Log.info("User created successfully", {"user_id": user_id})
-            
-            return JsonResponse({
-                "id": user_id,
-                "status": "created"
-            }, status=201)
-            
-        except Exception as e:
-            Log.error("User creation failed", {"error": str(e)})
-            return JsonResponse({"error": str(e)}, status=500)
-```
+### 1. LogID Not Generated
+- Ensure you're using the static `Log` class
+- Check that pytest fixtures are loaded
+- Verify `core/__init__.py` imports fixtures
 
-## 🎉 Benefits
+### 2. LogID Not in API Headers
+- Ensure API client is properly initialized
+- Check that LogID is set before making API calls
+- Verify API client configuration
 
-### 1. **Simplicity**
-- No need to manage logger instances
-- No need to pass logger parameters
-- Simple `Log.info()` syntax
+### 3. LogID Not in Allure Reports
+- Check Allure configuration
+- Ensure LogID attachment is enabled
+- Verify test execution with Allure
 
-### 2. **Automatic LogID Management**
-- LogID is automatically generated and managed
-- Consistent LogID throughout session
-- No manual LogID handling required
+## 📚 Related Documentation
 
-### 3. **Cross-Layer Compatibility**
-- Works in app, biz, and test layers
-- Same interface everywhere
-- Consistent logging format
-
-### 4. **Rich Features**
-- Allure integration
-- Structured data logging
-- Performance monitoring
-- Error context
-
-The static `Log` class provides a clean, simple interface for logging across all layers while automatically handling LogID management behind the scenes.
+- [LogID Usage Guide](logid_usage_guide.md) - Comprehensive LogID functionality
+- [File Logging Guide](file_logging_guide.md) - Local file logging capabilities
+- [Parallel Testing Guide](parallel_testing_guide.md) - Running tests in parallel

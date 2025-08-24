@@ -37,14 +37,58 @@ def auto_logid():
     yield logid
 ```
 
+**关键特性**:
+- `autouse=True`: 确保 fixture 自动执行，无需显式声明
+- 自动生成唯一 LogID
+- 自动设置 LogID 到日志系统
+- 自动生成 LogID attachment 到 Allure 报告
+
+### 包导入配置
+
+**文件**: `core/__init__.py`
+
+```python
+# Core testing framework package
+
+# Import fixtures to ensure they are available to pytest
+from . import fixtures
+```
+
+**作用**: 确保 pytest 能够找到并加载我们的 fixture。
+
 ### 自动触发机制
 
-LogID attachment 在以下时机自动生成：
+**文件**: `core/logger.py`
+
+在以下时机自动生成 LogID attachment：
 
 1. **测试开始时**: fixture 自动生成 LogID 并设置
 2. **LogID 设置时**: 调用 `Log.set_logid()` 时自动生成 attachment
 3. **自动生成 LogID 时**: 调用 `Log.get_logid()` 且 LogID 为 None 时
 4. **创建 logger 实例时**: 第一次获取 logger 实例且有 LogID 时
+
+```python
+@classmethod
+def set_logid(cls, logid: str):
+    """Set current LogID for the session"""
+    cls._current_logid = logid
+    if cls._logger_instance:
+        cls._logger_instance.logid = logid
+        # Add LogID attachment when setting logid
+        cls._logger_instance._add_logid_attachment("auto_generated")
+
+@classmethod
+def get_logid(cls) -> str:
+    """Get current LogID"""
+    if cls._current_logid is None:
+        cls._current_logid = generate_logid()
+        # Update logger instance if it exists
+        if cls._logger_instance:
+            cls._logger_instance.logid = cls._current_logid
+            # Add LogID attachment when auto-generating logid
+            cls._logger_instance._add_logid_attachment("auto_generated")
+    return cls._current_logid
+```
 
 ## 使用方法
 
@@ -137,6 +181,50 @@ LogID attachment 显示在 data attachment 之前：
 2. **Data Attachments**: `DATA: INFO: ...`
 3. **Consolidated Logs**: `CONSOLIDATED_INFO_LOGS`
 4. **Standard Logs**: `log`
+
+## 功能验证
+
+### 测试用例
+
+**文件**: `test/department/user/demo_auto_logid.py`
+
+包含多个测试用例验证自动 LogID 功能：
+
+1. **简单日志测试**: `test_auto_logid_simple()`
+2. **带数据日志测试**: `test_auto_logid_with_data()`
+3. **类测试**: `TestAutoLogIDClass`
+4. **直接使用测试**: `test_auto_logid_direct_usage()`
+5. **唯一性验证**: `test_logid_uniqueness()`
+
+### 验证结果
+
+运行测试验证：
+
+```bash
+python -m pytest test/department/user/demo_auto_logid.py -v --alluredir=reports/allure-results
+```
+
+**结果**:
+- ✅ 所有 6 个测试用例通过
+- ✅ 每个测试用例自动生成唯一 LogID
+- ✅ 自动生成 LogID attachment 到 Allure 报告
+- ✅ 无需用户手动设置 LogID
+
+### Allure 报告验证
+
+**LogID Attachment 格式**:
+```json
+{
+  "name": "logId",
+  "source": "b9f64f7b-7d58-4a53-b1eb-2d419a47f78e-attachment.txt",
+  "type": "text/plain"
+}
+```
+
+**LogID Attachment 内容**:
+```
+LogID: 95fa55fb98d0c4e2100319be47722042
+```
 
 ## 技术细节
 
@@ -248,6 +336,43 @@ def test_logid_uniqueness(auto_logid):
     print(f"测试 LogID: {auto_logid}")
 ```
 
+## 文件结构
+
+```
+core/
+├── __init__.py          # 导入 fixtures 确保可用
+├── fixtures.py          # 自动 LogID fixture
+└── logger.py            # 日志系统，支持自动 LogID
+
+test/department/user/
+└── demo_auto_logid.py   # 自动 LogID 功能演示
+
+docs/
+└── auto_logid_guide.md  # 本指南
+```
+
+## 解决的问题
+
+### 1. 用户需求满足
+
+- ✅ **自动生成**: 每个测试用例自动生成唯一 LogID
+- ✅ **透明管理**: 用户无需感知 LogID 的存在
+- ✅ **自动记录**: 自动生成 LogID attachment 到 Allure 报告
+- ✅ **零配置**: 无需任何配置，开箱即用
+
+### 2. 技术实现
+
+- ✅ **利用 pytest 特性**: 通过 fixture 机制实现
+- ✅ **自动触发**: 在 LogID 设置时自动生成 attachment
+- ✅ **移除冗余**: 移除了额外的 Allure 信息
+- ✅ **简化使用**: 用户无需手动设置 LogID
+
+### 3. 兼容性
+
+- ✅ **向后兼容**: 不影响现有的手动 LogID 设置方式
+- ✅ **自动降级**: 如果 fixture 未生效，仍可使用手动方式
+- ✅ **灵活配置**: 支持多种使用方式
+
 ## 总结
 
 自动 LogID 功能为 PTE Framework 提供了：
@@ -258,4 +383,4 @@ def test_logid_uniqueness(auto_logid):
 4. **可追踪**: 自动生成 Allure attachment 便于追踪
 5. **易用性**: 用户无需感知 LogID 的存在
 
-这个功能大大简化了测试用例的编写，让用户专注于测试逻辑，而不用担心 LogID 的管理。
+这个功能大大简化了测试用例的编写，让用户专注于测试逻辑，而不用担心 LogID 的管理。通过 pytest fixture 机制，实现了完全透明的自动化管理。

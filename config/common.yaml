@@ -10,12 +10,14 @@ logging:
     # 日志文件目录 (相对于项目根目录)
     directory: "logs"
     
-    # 日志文件名格式 (支持时间变量)
-    # 可用变量: {date}, {time}, {datetime}, {level}
+    # 日志文件名格式 (支持时间变量和测试用例信息)
+    # 可用变量: {date}, {time}, {datetime}, {level}, {testcase}, {logid}
     # {date}: YYYYMMDD 格式的日期
     # {time}: HHMMSS 格式的时间
     # {datetime}: YYYYMMDD_HHMMSS 格式的日期时间
-    filename_format: "pte_{datetime}_{level}.log"
+    # {testcase}: 测试用例名称 (自动提取)
+    # {logid}: 当前 LogID (自动填充)
+    filename_format: "pte_{datetime}_{testcase}_{logid}_{level}.log"
     
     # 日志级别 (DEBUG, INFO, WARNING, ERROR)
     level: "INFO"

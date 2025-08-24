@@ -4,6 +4,10 @@
 
 PTE Framework 现在支持将日志同时输出到本地文件，方便本地排查和调试。日志文件功能与 Allure 报告功能并行工作，提供完整的日志追踪能力。
 
+## 实现概述
+
+成功为 PTE Framework 增加了本地日志文件输出功能，与现有的 Allure 报告功能并行工作，提供完整的日志追踪能力。
+
 ## 功能特性
 
 - ✅ **统一配置**: 通过 `config/common.yaml` 统一配置日志行为
@@ -13,6 +17,54 @@ PTE Framework 现在支持将日志同时输出到本地文件，方便本地排
 - ✅ **日志保留**: 支持设置日志文件保留天数
 - ✅ **LogID 追踪**: 所有日志都包含 LogID，支持端到端追踪
 - ✅ **格式化输出**: 统一的日志格式，包含时间戳、级别、LogID、调用位置等信息
+
+## 实现的功能
+
+### ✅ 核心功能
+
+1. **统一配置管理**
+   - 创建了 `config/common.yaml` 统一配置文件
+   - 支持日志文件、控制台、Allure 报告的独立配置
+   - 配置参数丰富，支持多种场景需求
+
+2. **文件日志输出**
+   - 支持将日志同时输出到本地文件
+   - 保持与 Allure 报告相同的日志格式和 LogID 追踪
+   - 支持所有日志级别 (DEBUG, INFO, WARNING, ERROR)
+
+3. **日志文件管理**
+   - 支持按日期自动轮转日志文件
+   - 支持按大小轮转日志文件
+   - 支持日志文件压缩
+   - 支持日志文件保留策略
+
+4. **LogID 追踪**
+   - 所有日志文件中的记录都包含 LogID
+   - 支持端到端的日志追踪
+   - 与现有 LogID 系统完全兼容
+
+5. **LogID Attachment**
+   - 在 Allure 报告中自动生成专门的 LogID attachment 文件
+   - 包含测试名称、LogID、开始时间等完整信息
+   - 提供详细的使用指南和搜索命令
+   - 支持跨系统日志追踪
+
+### ✅ 技术特性
+
+1. **高性能设计**
+   - 使用 Python 标准 logging 模块
+   - 支持异步日志写入
+   - 线程安全的日志操作
+
+2. **灵活的配置**
+   - 支持自定义日志格式
+   - 支持自定义文件名格式
+   - 支持按级别分别输出文件
+
+3. **错误处理**
+   - 优雅的配置加载失败处理
+   - 文件写入错误不影响测试执行
+   - 提供详细的错误信息
 
 ## 配置说明
 
@@ -98,13 +150,52 @@ logging:
 | `max_size_mb` | integer | 100 | 单个文件最大大小(MB) |
 | `enable_compression` | boolean | false | 是否启用压缩 |
 
-#### 控制台配置 (console)
+## 文件结构
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `enabled` | boolean | true | 是否启用控制台输出 |
-| `level` | string | "ERROR" | 控制台日志级别 |
-| `format` | string | "[{timestamp}] [{level}] [{logid}] [{caller}] {message}" | 日志格式 |
+### 新增文件
+
+```
+pte/
+├── config/
+│   └── common.yaml                    # 统一配置文件
+├── core/
+│   └── file_logger.py                 # 文件日志处理器
+├── logs/                              # 日志文件目录
+│   └── pte_20250824_all.log          # 日志文件示例
+├── docs/
+│   ├── file_logging_guide.md          # 本使用指南
+│   └── logid_attachment_guide.md      # LogID attachment 指南
+└── test/department/user/
+│   ├── demo_file_logging.py           # 演示测试
+│   └── demo_logid_attachment.py       # LogID attachment 演示测试
+```
+
+### 修改文件
+
+```
+pte/
+├── config/
+│   └── settings.py                    # 增加 common.yaml 配置加载
+└── core/
+    └── logger.py                      # 集成文件日志功能
+```
+
+## 配置示例
+
+### 基本配置 (config/common.yaml)
+
+```yaml
+logging:
+  enable_file_logging: true
+  
+  file:
+    directory: "logs"
+    filename_format: "pte_{datetime}_{level}.log"
+    level: "INFO"
+    format: "[{timestamp}] [{level}] [{logid}] [{caller}] {message}"
+    rotate_by_date: true
+    separate_by_level: false
+```
 
 ## 使用方法
 

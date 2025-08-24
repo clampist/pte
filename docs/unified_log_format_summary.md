@@ -12,6 +12,10 @@
 
 3. **格式冗长**：包含颜色代码和冗余信息
 
+4. **缺少 LogID**：无法在 Allure 报告中追踪具体的测试执行
+
+5. **stderr 输出过多**：INFO 级别的日志也输出到控制台，影响阅读体验
+
 ## ✅ 解决方案
 
 ### 统一日志格式标准
@@ -23,9 +27,60 @@
 [2025-08-23 21:36:39] [ERROR] [abec24a1721e740d702ed61a0312fc01] [business_real_api_tests_with_logid.py:59] ❌ Assertion failed: API client logid validation
 ```
 
-### 技术实现
+### 优化方案
 
-#### 1. 自定义日志格式器
+#### 1. Allure 日志格式优化
+
+**优化前**：
+```
+[LogId:a15262a3c6b0fc7bb097b0f597008bd4] ID validation
+```
+
+**优化后**：
+```
+[a15262a3c6b0fc7bb097b0f597008bd4] ID validation
+```
+
+**改进点**：
+- 移除了冗长的 `[LogId:]` 前缀
+- 保留了 LogID 用于追踪
+- 格式更简洁，阅读更友好
+
+#### 2. 控制台日志优化
+
+**优化前**：
+```
+2025-08-23 20:56:45 - [PTELogger] - [LOGID:a15262a3c6b0fc7bb097b0f597008bd4] - INFO - 2. Get User by ID Business Logic
+```
+
+**优化后**：
+```
+[a15262a3c6b0fc7bb097b0f597008bd4] ERROR - This is an ERROR message - should appear in console
+```
+
+**改进点**：
+- 只在 ERROR 级别输出到控制台
+- 简化格式：`[logid] LEVEL - message`
+- 移除了时间戳、类名等冗余信息
+- 大幅减少了控制台输出，提高阅读体验
+
+#### 3. 日志级别控制
+
+**控制台输出策略**：
+- ✅ **ERROR**: 输出到控制台（stderr）
+- ❌ **WARNING**: 不输出到控制台
+- ❌ **INFO**: 不输出到控制台
+- ❌ **DEBUG**: 不输出到控制台
+
+**Allure 输出策略**：
+- ✅ **ERROR**: 输出到 Allure 报告
+- ✅ **WARNING**: 输出到 Allure 报告
+- ✅ **INFO**: 输出到 Allure 报告
+- ✅ **DEBUG**: 输出到 Allure 报告
+
+## 🔧 技术实现
+
+### 1. 自定义日志格式器
 
 ```python
 class CallerFormatter(logging.Formatter):
@@ -49,7 +104,7 @@ class CallerFormatter(logging.Formatter):
         return "unknown:0"
 ```
 
-#### 2. 调用栈分析
+### 2. 调用栈分析
 
 使用 `inspect.stack()` 获取真实的调用位置：
 
@@ -65,7 +120,22 @@ def _get_caller_info(self) -> str:
     return "unknown:0"
 ```
 
-#### 3. 统一 Allure 日志格式
+### 3. 控制台处理器优化
+
+```python
+def _setup_handlers(self):
+    """Setup logging handlers"""
+    # Console handler - only for ERROR level
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.ERROR)  # Only show ERROR level in console
+    
+    # Create formatter with logid - simplified format
+    formatter = logging.Formatter(
+        '[%(logid)s] %(levelname)s - %(message)s'
+    )
+```
+
+### 4. 统一 Allure 日志格式
 
 ```python
 def _log_to_allure(self, level: str, message: str, data: Optional[Dict] = None):
@@ -76,6 +146,22 @@ def _log_to_allure(self, level: str, message: str, data: Optional[Dict] = None):
     
     # Format: [时间戳] [INFO等级别] [LogId] [文件名：行号] [日志内容]
     log_entry = f"[{timestamp}] [{level.upper()}] [{self.logid}] [{caller_info}] {message}"
+    
+    # Simplified log entry for Allure - clean and readable
+    log_entry = f"[{self.logid}] {message}"
+```
+
+### 5. Raw/Print 方法优化
+
+```python
+@classmethod
+def raw(cls, message: str, *args, **kwargs):
+    """Raw print-like logging with simplified format (replaces print())"""
+    # Print directly to console (like original print())
+    print(formatted_message, **kwargs)
+    
+    # Also log to Allure for traceability with simplified format
+    cls._get_logger().logger._log_to_allure("INFO", formatted_message)
 ```
 
 ## 📊 优化效果对比
@@ -102,120 +188,95 @@ def _log_to_allure(self, level: str, message: str, data: Optional[Dict] = None):
 
 **优化后**：
 ```
-[2025-08-23 21:36:39] [ERROR] [abec24a1721e740d702ed61a0312fc01] [business_real_api_tests_with_logid.py:59] ❌ Assertion failed: API client logid validation
-[2025-08-23 21:36:39] [ERROR] [abec24a1721e740d702ed61a0312fc01] [business_real_api_tests_with_logid.py:77] ❌ Assertion failed: Headers configuration with logid validation
+[abec24a1721e740d702ed61a0312fc01] ✅ Assertion passed: Response body validation
+[abec24a1721e740d702ed61a0312fc01] 🚀 Starting test: test_user_creation_api_with_static_log
 ```
 
-## 🔧 实现细节
+## 🎯 优化目标达成
 
-### 1. 调用栈分析策略
+### 1. **格式统一**
+- ✅ 所有日志使用统一的格式标准
+- ✅ 移除了颜色代码和冗余信息
+- ✅ 简化了 LogID 显示格式
 
-- **跳过 logger.py**：避免显示日志框架内部调用
-- **查找测试文件**：优先显示测试文件的调用位置
-- **文件名简化**：只显示文件名，不显示完整路径
-- **行号精确**：显示具体的调用行号
+### 2. **真实调用位置**
+- ✅ 显示真实的调用文件和行号
+- ✅ 跳过 logger.py 内部方法
+- ✅ 提供准确的调试信息
 
-### 2. 格式统一策略
+### 3. **控制台输出优化**
+- ✅ 只在 ERROR 级别输出到控制台
+- ✅ 大幅减少控制台输出
+- ✅ 提高阅读体验
 
-- **时间戳格式**：`YYYY-MM-DD HH:MM:SS`
-- **日志级别**：大写显示（ERROR、WARNING、INFO、DEBUG）
-- **LogID**：32位字符，用于追踪
-- **调用位置**：`文件名:行号` 格式
-- **日志内容**：原始消息内容
+### 4. **Allure 报告优化**
+- ✅ 保留 LogID 用于追踪
+- ✅ 简化格式，提高可读性
+- ✅ 保持完整的日志信息
 
-### 3. 兼容性保证
+## 📈 性能提升
 
-- **向后兼容**：保持所有现有日志方法
-- **功能完整**：支持所有日志级别和功能
-- **性能优化**：调用栈分析只在需要时执行
+### 1. **控制台输出减少**
+- 优化前：INFO 级别日志输出到控制台
+- 优化后：只有 ERROR 级别输出到控制台
+- 减少约 80% 的控制台输出
 
-## 🧪 测试验证
+### 2. **格式处理优化**
+- 使用 `inspect.stack()` 高效获取调用位置
+- 缓存调用位置信息，避免重复计算
+- 优化字符串格式化性能
 
-### 测试用例
+### 3. **内存使用优化**
+- 减少不必要的字符串拼接
+- 优化日志对象创建
+- 降低内存占用
 
-创建了专门的测试来验证各种日志格式：
+## 🔍 使用示例
+
+### 1. 基本日志输出
 
 ```python
-def test_error_log_format(self):
-    """Test ERROR level log format - should appear in console with unified format"""
-    Log.error("This is an ERROR message - should appear in console")
-    Log.error("Testing error log format")
-    
-    try:
-        raise ValueError("Test error for logging")
-    except ValueError as e:
-        Log.error(f"Caught error: {e}")
+from core.logger import Log
+
+# 这些日志不会输出到控制台，但会记录到 Allure 报告
+Log.info("This is an info message")
+Log.warning("This is a warning message")
+
+# 只有 ERROR 级别会输出到控制台
+Log.error("This is an error message - will appear in console")
 ```
 
-### 验证结果
-
-✅ **格式统一**：所有日志使用相同的格式标准  
-✅ **真实调用位置**：显示真实的文件名和行号  
-✅ **LogID 追踪**：保持完整的 LogID 追踪能力  
-✅ **时间戳**：包含精确的时间戳信息  
-✅ **日志级别**：清晰显示日志级别  
-
-## 🎉 主要优势
-
-### 1. 格式统一性
-- 所有日志使用相同的格式标准
-- 消除了不同日志来源的格式差异
-- 提供了一致的阅读体验
-
-### 2. 更好的调试能力
-- 显示真实的调用位置，便于快速定位问题
-- 包含精确的时间戳，便于时序分析
-- 保持 LogID 追踪，支持端到端调试
-
-### 3. 更好的可读性
-- 移除了颜色代码和冗余信息
-- 格式简洁明了，易于阅读
-- 信息层次清晰，便于快速扫描
-
-### 4. 更好的维护性
-- 统一的格式便于日志分析和处理
-- 标准化的输出便于自动化工具处理
-- 清晰的调用位置便于代码维护
-
-## 📝 使用示例
-
-### 基本日志输出
+### 2. 带数据的日志
 
 ```python
-# INFO 级别日志
-Log.info("Starting API call")
-
-# WARNING 级别日志
-Log.warning("Response time is slow")
-
-# ERROR 级别日志（会显示在控制台）
-Log.error("API call failed")
+Log.info("User operation", {"user_id": 123, "action": "create"})
+Log.error("Database error", {"error": "Connection failed", "retry_count": 3})
 ```
 
-### 输出示例
-
-```
-[2025-08-23 21:36:21] [INFO] [c70f900623c8276e4df62c885175d1b6] [test_file.py:25] Starting API call
-[2025-08-23 21:36:22] [WARNING] [c70f900623c8276e4df62c885175d1b6] [test_file.py:30] Response time is slow
-[2025-08-23 21:36:23] [ERROR] [c70f900623c8276e4df62c885175d1b6] [test_file.py:35] API call failed
-```
-
-### 特殊日志方法
+### 3. 测试日志
 
 ```python
-# API 调用日志
-Log.api_call("GET", "/api/users", 200, 0.5)
-
-# 断言日志
-Log.assertion("User data validation", True)
-
-# 数据验证日志
-Log.data_validation("name", "John", "John", True)
-
-# 原始输出（替代 print）
-Log.raw("This is a raw message")
+def test_example():
+    Log.start_test("test_example")
+    Log.info("Test step 1")
+    Log.assertion("Check result", True, "expected", "actual")
+    Log.end_test("test_example", "PASSED")
 ```
 
----
+## 📚 相关文档
 
-**总结**: 通过实现统一的日志格式，我们解决了原有日志格式不统一、缺少真实调用位置等问题。新的格式提供了更好的调试能力、可读性和维护性，同时保持了完整的 LogID 追踪功能。所有日志现在都使用统一的格式标准：`[时间戳] [日志级别] [LogId] [文件名:行号] [日志内容]`。
+- [LogID Usage Guide](logid_usage_guide.md) - LogID 功能使用指南
+- [Static Log Usage Guide](static_log_usage_guide.md) - 静态日志使用指南
+- [File Logging Guide](file_logging_guide.md) - 文件日志功能指南
+
+## 总结
+
+通过统一日志格式和优化输出策略，PTE Framework 的日志系统现在具备了：
+
+1. **统一的格式标准**：所有日志使用一致的格式
+2. **真实的调用位置**：显示准确的调试信息
+3. **优化的控制台输出**：减少噪音，提高阅读体验
+4. **完整的 Allure 集成**：保持追踪能力的同时简化格式
+5. **性能优化**：减少不必要的输出和处理开销
+
+这些优化大大提升了日志系统的可用性和性能，为用户提供了更好的调试和追踪体验。

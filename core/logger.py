@@ -1,5 +1,5 @@
 """
-PTE Framework Enhanced Logger Module
+PTE Framework Unified Logger Module
 Provides unified logging functionality with logid support for end-to-end tracing
 """
 import logging
@@ -51,17 +51,32 @@ class LogIdGenerator:
         return logid
 
 
-class PTELogger:
-    """PTE Framework Logger with logid support"""
+class Log:
+    """
+    Unified logging utility class for easy access across all layers.
+    Automatically handles LogID generation and management.
+    Combines functionality from PTELogger, TestLogger, and static Log class.
+    """
     
     # Class-level storage for accumulated logs
     _accumulated_logs = {}
     
+    # Global state management
+    _current_logid: Optional[str] = None
+    _logger_instance: Optional['Log'] = None
+    _test_start_time: Optional[datetime] = None
+    _test_class_name: str = "PTE"
+    _current_testcase: Optional[str] = None
+    
     def __init__(self, name: str = "PTE", level: int = logging.INFO, logid: Optional[str] = None):
-        """Initialize logger"""
+        """Initialize logger instance (mainly for backward compatibility)"""
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
         self._logid = logid or LogIdGenerator.generate_logid()
+        
+        # Initialize file manager attributes
+        self.file_manager = None
+        self.logging_config = None
         
         # Initialize accumulated logs for this logid
         if self._logid not in self._accumulated_logs:
@@ -75,6 +90,50 @@ class PTELogger:
         # Prevent duplicate handlers
         if not self.logger.handlers:
             self._setup_handlers()
+    
+    @classmethod
+    def _get_instance(cls) -> 'Log':
+        """Get or create singleton instance with current LogID"""
+        if cls._logger_instance is None:
+            cls._logger_instance = Log("PTE", logid=cls._current_logid)
+            # Add LogID attachment when creating logger instance
+            if cls._current_logid:
+                cls._add_logid_attachment("auto_generated")
+        return cls._logger_instance
+    
+    @classmethod
+    def set_logid(cls, logid: str):
+        """Set current LogID for the session"""
+        cls._current_logid = logid
+        if cls._logger_instance:
+            cls._logger_instance.logid = logid
+            # Add LogID attachment when setting logid
+            cls._add_logid_attachment("auto_generated")
+    
+    @classmethod
+    def get_logid(cls) -> str:
+        """Get current LogID"""
+        if cls._current_logid is None:
+            cls._current_logid = LogIdGenerator.generate_logid()
+            # Update logger instance if it exists
+            if cls._logger_instance:
+                cls._logger_instance.logid = cls._current_logid
+                # Add LogID attachment when auto-generating logid
+                cls._add_logid_attachment("auto_generated")
+        return cls._current_logid
+    
+    @classmethod
+    def get_headers_with_logid(cls, additional_headers: Optional[Dict] = None) -> Dict[str, str]:
+        """Get headers with current LogID"""
+        headers = {
+            'logId': cls.get_logid(),
+            'Content-Type': 'application/json'
+        }
+        
+        if additional_headers:
+            headers.update(additional_headers)
+        
+        return headers
     
     @property
     def logid(self):
@@ -105,12 +164,12 @@ class PTELogger:
             self._recreate_handlers()
     
     def _recreate_handlers(self):
-        """Recreate handlers for current logid"""
+        """Recreate handlers for current logid and testcase"""
         # Remove existing handlers
         for handler in self.logger.handlers[:]:
             self.logger.removeHandler(handler)
         
-        # Recreate handlers
+        # Recreate handlers with current testcase
         self._setup_handlers()
     
     def _setup_handlers(self):
@@ -161,30 +220,9 @@ class PTELogger:
             # Add console handler
             self.logger.addHandler(console_handler)
         
-        # File handler
-        if logging_config.get('enable_file_logging', False) and LogFileManager:
-            try:
-                self.file_manager = LogFileManager(logging_config)
-                handlers = self.file_manager.get_handlers()
-                
-                # Add LogID filter to file handlers
-                for handler in handlers.values():
-                    # Add LogID filter to file handlers
-                    class LogIdFilter(logging.Filter):
-                        def __init__(self, logger_instance):
-                            super().__init__()
-                            self.logger_instance = logger_instance
-                        
-                        def filter(self, record):
-                            record.logid = self.logger_instance.logid
-                            return True
-                    
-                    handler.addFilter(LogIdFilter(self))
-                
-                self.file_manager.add_handlers_to_logger(self.logger)
-            except Exception as e:
-                # Fallback: log error to console
-                print(f"Warning: Failed to setup file logging: {e}")
+        # File handler - will be created lazily when needed
+        self.logging_config = logging_config
+        self.file_manager = None
     
     def _get_logging_config(self) -> Dict[str, Any]:
         """Get logging configuration from common.yaml"""
@@ -224,6 +262,40 @@ class PTELogger:
         # Format: [时间戳] [INFO等级别] [LogId] [文件名：行号] [日志内容]
         log_entry = f"[{timestamp}] [{level.upper()}] [{self.logid}] [{caller_info}] {message}"
         
+        # Create file manager lazily if needed
+        if self.logging_config is None:
+            self.logging_config = self._get_logging_config()
+        
+        if self.file_manager is None and self.logging_config and self.logging_config.get('enable_file_logging', False) and LogFileManager:
+            try:
+                # Create file manager with current testcase info
+                testcase = Log._current_testcase
+                logid = self.logid
+                
+
+                
+                self.file_manager = LogFileManager(self.logging_config, testcase, logid)
+                handlers = self.file_manager.get_handlers()
+                
+                # Add LogID filter to file handlers
+                for handler in handlers.values():
+                    # Add LogID filter to file handlers
+                    class LogIdFilter(logging.Filter):
+                        def __init__(self, logger_instance):
+                            super().__init__()
+                            self.logger_instance = logger_instance
+                        
+                        def filter(self, record):
+                            record.logid = self.logger_instance.logid
+                            return True
+                    
+                    handler.addFilter(LogIdFilter(self))
+                
+                self.file_manager.add_handlers_to_logger(self.logger)
+            except Exception as e:
+                # Fallback: log error to console
+                print(f"Warning: Failed to setup file logging: {e}")
+        
         # Log to file using standard logging
         log_level = getattr(logging, level.upper())
         self.logger.log(log_level, message)
@@ -251,58 +323,100 @@ class PTELogger:
                 return f"{os.path.basename(filename)}:{lineno}"
         return "unknown:0"
     
-    def get_logid(self) -> str:
-        """Get current logid"""
-        return self.logid
+    @classmethod
+    def _add_logid_attachment(cls, test_name: str):
+        """Add LogID attachment to Allure report"""
+        # Add LogID as Allure attachment (simple format)
+        allure.attach(
+            f"LogID: {cls.get_logid()}",
+            "logId",
+            allure.attachment_type.TEXT
+        )
     
-    def get_headers_with_logid(self, additional_headers: Optional[Dict] = None) -> Dict[str, str]:
-        """
-        Get headers with logid for API requests
+    # Static logging methods (main interface)
+    @classmethod
+    def info(cls, message: str, data: Optional[Dict] = None):
+        """Log info message with current LogID"""
+        cls._get_instance()._log_to_allure("INFO", message, data)
+    
+    @classmethod
+    def warning(cls, message: str, data: Optional[Dict] = None):
+        """Log warning message with current LogID"""
+        cls._get_instance()._log_to_allure("WARNING", message, data)
+    
+    @classmethod
+    def error(cls, message: str, data: Optional[Dict] = None):
+        """Log error message with current LogID"""
+        cls._get_instance()._log_to_allure("ERROR", message, data)
+    
+    @classmethod
+    def debug(cls, message: str, data: Optional[Dict] = None):
+        """Log debug message with current LogID"""
+        cls._get_instance()._log_to_allure("DEBUG", message, data)
+    
+    @classmethod
+    def assertion(cls, description: str, condition: bool, expected: Any = None, actual: Any = None):
+        """Log assertion with current LogID"""
+        if condition:
+            cls._get_instance()._log_to_allure("INFO", f"✅ Assertion passed: {description}")
+        else:
+            error_data = {
+                "description": description,
+                "expected": expected,
+                "actual": actual,
+                "logid": cls.get_logid()
+            }
+            cls._get_instance()._log_to_allure("ERROR", f"❌ Assertion failed: {description}", error_data)
+    
+    @classmethod
+    def api_call(cls, method: str, url: str, status_code: Optional[int] = None, 
+                 response_time: Optional[float] = None, request_data: Optional[Dict] = None,
+                 response_data: Optional[Dict] = None):
+        """Log API call with current LogID"""
+        message = f"🌐 API Call: {method} {url}"
+        if status_code:
+            message += f" - Status: {status_code}"
+        if response_time:
+            message += f" - Time: {response_time:.2f}s"
         
-        Args:
-            additional_headers: Additional headers to include
-            
-        Returns:
-            Headers dictionary with logid
-        """
-        headers = {
-            'logId': self.logid,
-            'Content-Type': 'application/json'
+        data = {
+            "method": method,
+            "url": url,
+            "status_code": status_code,
+            "response_time": response_time,
+            "logid": cls.get_logid(),
+            "request_data": request_data,
+            "response_data": response_data
         }
-        
-        if additional_headers:
-            headers.update(additional_headers)
-        
-        return headers
+        cls.info(message, data)
     
-    def info(self, message: str, data: Optional[Dict] = None):
-        """Log info message with logid"""
-        self._log_to_allure("INFO", message, data)
+    @classmethod
+    def data_validation(cls, field: str, expected: Any, actual: Any, passed: bool):
+        """Log data validation with current LogID"""
+        if passed:
+            cls._get_instance()._log_to_allure("INFO", f"✅ Data validation passed: {field}")
+        else:
+            error_data = {
+                "field": field,
+                "expected": expected,
+                "actual": actual,
+                "logid": cls.get_logid()
+            }
+            cls._get_instance()._log_to_allure("ERROR", f"❌ Data validation failed: {field}", error_data)
     
-    def warning(self, message: str, data: Optional[Dict] = None):
-        """Log warning message with logid"""
-        self._log_to_allure("WARNING", message, data)
-    
-    def error(self, message: str, data: Optional[Dict] = None):
-        """Log error message with logid"""
-        self._log_to_allure("ERROR", message, data)
-    
-    def debug(self, message: str, data: Optional[Dict] = None):
-        """Log debug message with logid"""
-        self._log_to_allure("DEBUG", message, data)
-    
-    def step(self, step_name: str, step_func=None):
+    @classmethod
+    def step(cls, step_name: str, step_func=None):
         """Decorator for Allure steps with logid logging"""
         def decorator(func):
             def wrapper(*args, **kwargs):
-                with allure.step(f"[LOGID:{self.logid}] {step_name}"):
-                    self.info(f"Starting step: {step_name}")
+                with allure.step(f"[LOGID:{cls.get_logid()}] {step_name}"):
+                    cls.info(f"Starting step: {step_name}")
                     try:
                         result = func(*args, **kwargs)
-                        self.info(f"Step completed: {step_name}")
+                        cls.info(f"Step completed: {step_name}")
                         return result
                     except Exception as e:
-                        self.error(f"Step failed: {step_name} - {str(e)}")
+                        cls.error(f"Step failed: {step_name} - {str(e)}")
                         raise
             return wrapper
         
@@ -310,12 +424,14 @@ class PTELogger:
             return decorator(step_func)
         return decorator
     
-    def test_start(self, test_name: str):
-        """Log test start with logid"""
-        self._log_to_allure("INFO", f"🚀 Starting test: {test_name}")
+    @classmethod
+    def test_start(cls, test_name: str):
+        """Log test start with current LogID"""
+        cls._get_instance()._log_to_allure("INFO", f"🚀 Starting test: {test_name}")
     
-    def test_complete(self, test_name: str, status: str = "PASSED"):
-        """Log test completion with logid"""
+    @classmethod
+    def test_complete(cls, test_name: str, status: str = "PASSED"):
+        """Log test completion with current LogID"""
         status_emoji = {
             "PASSED": "✅",
             "FAILED": "❌", 
@@ -323,15 +439,34 @@ class PTELogger:
             "ERROR": "💥"
         }
         emoji = status_emoji.get(status.upper(), "📝")
-        self._log_to_allure("INFO", f"{emoji} Test completed: {test_name} - {status}")
+        cls._get_instance()._log_to_allure("INFO", f"{emoji} Test completed: {test_name} - {status}")
         
         # Output accumulated logs as consolidated attachments
-        self._output_accumulated_logs()
+        cls._output_accumulated_logs()
     
-    def _output_accumulated_logs(self):
+    @classmethod
+    def start_test(cls, test_method_name: str):
+        """Start test logging with current LogID"""
+        cls._test_start_time = datetime.now()
+        test_name = f"{cls._test_class_name}.{test_method_name}"
+        cls.test_start(test_name)
+    
+    @classmethod
+    def end_test(cls, test_method_name: str, status: str = "PASSED"):
+        """End test logging with current LogID"""
+        test_name = f"{cls._test_class_name}.{test_method_name}"
+        if cls._test_start_time:
+            duration = (datetime.now() - cls._test_start_time).total_seconds()
+            cls.info(f"⏱️ Test duration: {duration:.2f} seconds")
+        
+        cls.test_complete(test_name, status)
+    
+    @classmethod
+    def _output_accumulated_logs(cls):
         """Output accumulated logs as consolidated attachments"""
-        if self.logid in self._accumulated_logs:
-            logs = self._accumulated_logs[self.logid]
+        logid = cls.get_logid()
+        if logid in cls._accumulated_logs:
+            logs = cls._accumulated_logs[logid]
             
             # Create consolidated log files by level
             for level, entries in logs.items():
@@ -344,273 +479,7 @@ class PTELogger:
                     )
             
             # Clean up accumulated logs for this logid
-            del self._accumulated_logs[self.logid]
-    
-    def assertion(self, description: str, condition: bool, expected: Any = None, actual: Any = None):
-        """Log assertion with logid details"""
-        if condition:
-            self._log_to_allure("INFO", f"✅ Assertion passed: {description}")
-        else:
-            error_data = {
-                "description": description,
-                "expected": expected,
-                "actual": actual,
-                "logid": self.logid
-            }
-            self._log_to_allure("ERROR", f"❌ Assertion failed: {description}", error_data)
-    
-    def api_call(self, method: str, url: str, status_code: Optional[int] = None, 
-                 response_time: Optional[float] = None, request_data: Optional[Dict] = None,
-                 response_data: Optional[Dict] = None):
-        """Log API call details with logid"""
-        message = f"🌐 API Call: {method} {url}"
-        if status_code:
-            message += f" - Status: {status_code}"
-        if response_time:
-            message += f" - Time: {response_time:.2f}s"
-        
-        data = {
-            "method": method,
-            "url": url,
-            "status_code": status_code,
-            "response_time": response_time,
-            "logid": self.logid,
-            "request_data": request_data,
-            "response_data": response_data
-        }
-        self.info(message, data)
-    
-    def data_validation(self, field: str, expected: Any, actual: Any, passed: bool):
-        """Log data validation with logid"""
-        if passed:
-            self._log_to_allure("INFO", f"✅ Data validation passed: {field}")
-        else:
-            error_data = {
-                "field": field,
-                "expected": expected,
-                "actual": actual,
-                "logid": self.logid
-            }
-            self._log_to_allure("ERROR", f"❌ Data validation failed: {field}", error_data)
-
-
-class TestLogger:
-    """Test-specific logger with logid and enhanced features"""
-    
-    def __init__(self, test_class_name: str = "Test", logid: Optional[str] = None):
-        """Initialize test logger with logid"""
-        self.logid = logid or LogIdGenerator.generate_logid()
-        self.logger = PTELogger(f"{test_class_name}Logger", logid=self.logid)
-        self.test_class_name = test_class_name
-        self.test_start_time = None
-    
-    @property
-    def logid(self):
-        """Get current logid"""
-        return self._logid
-    
-    @logid.setter
-    def logid(self, value):
-        """Set logid and update logger"""
-        self._logid = value
-        if hasattr(self, 'logger'):
-            self.logger.logid = value
-    
-    def start_test(self, test_method_name: str):
-        """Start test logging with logid"""
-        self.test_start_time = datetime.now()
-        test_name = f"{self.test_class_name}.{test_method_name}"
-        self.logger.test_start(test_name)
-    
-    def _add_logid_attachment(self, test_name: str):
-        """Add LogID attachment to Allure report"""
-        # Add LogID as Allure attachment (simple format)
-        allure.attach(
-            f"LogID: {self.logid}",
-            "logId",
-            allure.attachment_type.TEXT
-        )
-    
-    def end_test(self, test_method_name: str, status: str = "PASSED"):
-        """End test logging with logid"""
-        test_name = f"{self.test_class_name}.{test_method_name}"
-        if self.test_start_time:
-            duration = (datetime.now() - self.test_start_time).total_seconds()
-            self.logger.info(f"⏱️ Test duration: {duration:.2f} seconds")
-        
-        self.logger.test_complete(test_name, status)
-    
-    def get_logid(self) -> str:
-        """Get current logid"""
-        return self.logid
-    
-    def get_headers_with_logid(self, additional_headers: Optional[Dict] = None) -> Dict[str, str]:
-        """Get headers with logid for API requests"""
-        return self.logger.get_headers_with_logid(additional_headers)
-    
-    def step(self, step_name: str):
-        """Create Allure step with logid logging"""
-        return self.logger.step(step_name)
-    
-    def info(self, message: str, data: Optional[Dict] = None):
-        """Log info message with logid"""
-        self.logger.info(message, data)
-    
-    def warning(self, message: str, data: Optional[Dict] = None):
-        """Log warning message with logid"""
-        self.logger.warning(message, data)
-    
-    def error(self, message: str, data: Optional[Dict] = None):
-        """Log error message with logid"""
-        self.logger.error(message, data)
-    
-    def debug(self, message: str, data: Optional[Dict] = None):
-        """Log debug message with logid"""
-        self.logger.debug(message, data)
-    
-    def assertion(self, description: str, condition: bool, expected: Any = None, actual: Any = None):
-        """Log assertion with logid"""
-        self.logger.assertion(description, condition, expected, actual)
-    
-    def api_call(self, method: str, url: str, status_code: Optional[int] = None, 
-                 response_time: Optional[float] = None, request_data: Optional[Dict] = None,
-                 response_data: Optional[Dict] = None):
-        """Log API call with logid"""
-        self.logger.api_call(method, url, status_code, response_time, request_data, response_data)
-    
-    def data_validation(self, field: str, expected: Any, actual: Any, passed: bool):
-        """Log data validation with logid"""
-        self.logger.data_validation(field, expected, actual, passed)
-
-
-# Global logger instance
-logger = PTELogger("PTE")
-
-
-def get_test_logger(test_class_name: str = "Test", logid: Optional[str] = None) -> TestLogger:
-    """Get test logger instance with optional logid"""
-    return TestLogger(test_class_name, logid)
-
-
-def generate_logid() -> str:
-    """Generate a new logid"""
-    return LogIdGenerator.generate_logid()
-
-
-class Log:
-    """
-    Static logging utility class for easy access across all layers.
-    Automatically handles LogID generation and management.
-    """
-    
-    _current_logid: Optional[str] = None
-    _logger_instance: Optional[TestLogger] = None
-    
-    @classmethod
-    def _get_logger(cls) -> TestLogger:
-        """Get or create logger instance with current LogID"""
-        if cls._logger_instance is None:
-            cls._logger_instance = TestLogger("PTE", logid=cls._current_logid)
-            # Add LogID attachment when creating logger instance
-            if cls._current_logid:
-                cls._logger_instance._add_logid_attachment("auto_generated")
-        return cls._logger_instance
-    
-    @classmethod
-    def set_logid(cls, logid: str):
-        """Set current LogID for the session"""
-        cls._current_logid = logid
-        if cls._logger_instance:
-            cls._logger_instance.logid = logid
-            # Add LogID attachment when setting logid
-            cls._logger_instance._add_logid_attachment("auto_generated")
-    
-    @classmethod
-    def get_logid(cls) -> str:
-        """Get current LogID"""
-        if cls._current_logid is None:
-            cls._current_logid = generate_logid()
-            # Update logger instance if it exists
-            if cls._logger_instance:
-                cls._logger_instance.logid = cls._current_logid
-                # Add LogID attachment when auto-generating logid
-                cls._logger_instance._add_logid_attachment("auto_generated")
-        return cls._current_logid
-    
-    @classmethod
-    def get_headers_with_logid(cls, additional_headers: Optional[Dict] = None) -> Dict[str, str]:
-        """Get headers with current LogID"""
-        headers = {
-            'logId': cls.get_logid(),
-            'Content-Type': 'application/json'
-        }
-        
-        if additional_headers:
-            headers.update(additional_headers)
-        
-        return headers
-    
-    @classmethod
-    def info(cls, message: str, data: Optional[Dict] = None):
-        """Log info message with current LogID"""
-        cls._get_logger().info(message, data)
-    
-    @classmethod
-    def warning(cls, message: str, data: Optional[Dict] = None):
-        """Log warning message with current LogID"""
-        cls._get_logger().warning(message, data)
-    
-    @classmethod
-    def error(cls, message: str, data: Optional[Dict] = None):
-        """Log error message with current LogID"""
-        cls._get_logger().error(message, data)
-    
-    @classmethod
-    def debug(cls, message: str, data: Optional[Dict] = None):
-        """Log debug message with current LogID"""
-        cls._get_logger().debug(message, data)
-    
-    @classmethod
-    def assertion(cls, description: str, condition: bool, expected: Any = None, actual: Any = None):
-        """Log assertion with current LogID"""
-        cls._get_logger().assertion(description, condition, expected, actual)
-    
-    @classmethod
-    def api_call(cls, method: str, url: str, status_code: Optional[int] = None, 
-                 response_time: Optional[float] = None, request_data: Optional[Dict] = None,
-                 response_data: Optional[Dict] = None):
-        """Log API call with current LogID"""
-        cls._get_logger().api_call(method, url, status_code, response_time, request_data, response_data)
-    
-    @classmethod
-    def data_validation(cls, field: str, expected: Any, actual: Any, passed: bool):
-        """Log data validation with current LogID"""
-        cls._get_logger().data_validation(field, expected, actual, passed)
-    
-    @classmethod
-    def step(cls, step_name: str):
-        """Create Allure step with current LogID"""
-        return cls._get_logger().step(step_name)
-    
-    @classmethod
-    def start_test(cls, test_method_name: str):
-        """Start test logging with current LogID"""
-        cls._get_logger().start_test(test_method_name)
-    
-    @classmethod
-    def end_test(cls, test_method_name: str, status: str = "PASSED"):
-        """End test logging with current LogID"""
-        cls._get_logger().end_test(test_method_name, status)
-    
-    @classmethod
-    def test_start(cls, test_name: str):
-        """Log test start with current LogID"""
-        cls._get_logger().test_start(test_name)
-    
-    @classmethod
-    def test_complete(cls, test_name: str, status: str = "PASSED"):
-        """Log test completion with current LogID"""
-        cls._get_logger().test_complete(test_name, status)
+            del cls._accumulated_logs[logid]
     
     @classmethod
     def raw(cls, message: str, *args, **kwargs):
@@ -624,9 +493,35 @@ class Log:
         print(formatted_message, **kwargs)
         
         # Also log to Allure for traceability with unified format
-        cls._get_logger().logger._log_to_allure("INFO", formatted_message)
+        cls._get_instance()._log_to_allure("INFO", formatted_message)
     
     @classmethod
     def print(cls, message: str, *args, **kwargs):
         """Alias for Log.raw() - direct replacement for print()"""
         cls.raw(message, *args, **kwargs)
+
+
+# Backward compatibility aliases
+def generate_logid() -> str:
+    """Generate a new logid"""
+    return LogIdGenerator.generate_logid()
+
+
+# # Legacy class aliases for backward compatibility
+# class PTELogger(Log):
+#     """Legacy alias for Log class - deprecated, use Log instead"""
+#     pass
+
+
+# class TestLogger(Log):
+#     """Legacy alias for Log class - deprecated, use Log instead"""
+#     pass
+
+
+# # Global logger instance for backward compatibility
+# logger = Log("PTE")
+
+
+def get_test_logger(test_class_name: str = "Test", logid: Optional[str] = None) -> Log:
+    """Get test logger instance with optional logid - deprecated, use Log directly"""
+    return Log(test_class_name, logid=logid)

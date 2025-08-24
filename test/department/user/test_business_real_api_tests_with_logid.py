@@ -11,7 +11,7 @@ from biz.department.user.operations import UserOperations
 from data.department.user.test_data import UserTestData
 from core.checker import DataChecker
 from biz.department.user.checker import UserErrorChecker
-from core.logger import Log
+from core.logger import Log, generate_logid
 
 
 @allure.epic("PTE Framework")
@@ -41,6 +41,11 @@ class TestBusinessRealAPIWithStaticLog:
     @allure.severity(allure.severity_level.CRITICAL)
     def test_real_api_connection_with_static_log(self):
         """Test real API connection with static log tracing"""
+        # 第1步：设置 LogID
+        logid = generate_logid()
+        Log.set_logid(logid)
+        
+        # 第2步：开始测试
         Log.start_test("test_real_api_connection_with_static_log")
         
         try:
@@ -91,17 +96,24 @@ class TestBusinessRealAPIWithStaticLog:
                 )
                 
                 Log.info("Real API connection test completed successfully")
-                Log.end_test("test_real_api_connection_with_static_log", "PASSED")
                 
         except Exception as e:
             Log.error(f"Real API connection test failed: {str(e)}")
             Log.end_test("test_real_api_connection_with_static_log", "FAILED")
             raise
+        else:
+            # 最后一步：结束测试
+            Log.end_test("test_real_api_connection_with_static_log", "PASSED")
     
     @allure.story("User Creation API with Static Log")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_user_creation_api_with_static_log(self):
         """Test user creation via real API with static log tracing"""
+        # 第1步：设置 LogID
+        logid = generate_logid()
+        Log.set_logid(logid)
+        
+        # 第2步：开始测试
         Log.start_test("test_user_creation_api_with_static_log")
         
         try:
@@ -141,17 +153,24 @@ class TestBusinessRealAPIWithStaticLog:
                     Log.assertion("LogID in response validation", True)
                 
                 Log.info("User creation API test completed successfully")
-                Log.end_test("test_user_creation_api_with_static_log", "PASSED")
                 
         except Exception as e:
             Log.error(f"User creation API test failed: {str(e)}")
             Log.end_test("test_user_creation_api_with_static_log", "FAILED")
             raise
+        else:
+            # 最后一步：结束测试
+            Log.end_test("test_user_creation_api_with_static_log", "PASSED")
     
     @allure.story("User Retrieval API with Static Log")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_retrieval_api_with_static_log(self):
         """Test user retrieval via real API with static log tracing"""
+        # 第1步：设置 LogID
+        logid = generate_logid()
+        Log.set_logid(logid)
+        
+        # 第2步：开始测试
         Log.start_test("test_user_retrieval_api_with_static_log")
         
         try:
@@ -194,17 +213,24 @@ class TestBusinessRealAPIWithStaticLog:
                         Log.warning(f"API call simulation: {type(e).__name__}")
                 
                 Log.info("User retrieval API test completed successfully")
-                Log.end_test("test_user_retrieval_api_with_static_log", "PASSED")
                 
         except Exception as e:
             Log.error(f"User retrieval API test failed: {str(e)}")
             Log.end_test("test_user_retrieval_api_with_static_log", "FAILED")
             raise
+        else:
+            # 最后一步：结束测试
+            Log.end_test("test_user_retrieval_api_with_static_log", "PASSED")
     
     @allure.story("User Update API with Static Log")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_update_api_with_static_log(self):
         """Test user update via real API with static log tracing"""
+        # 第1步：设置 LogID
+        logid = generate_logid()
+        Log.set_logid(logid)
+        
+        # 第2步：开始测试
         Log.start_test("test_user_update_api_with_static_log")
         
         try:
@@ -244,17 +270,24 @@ class TestBusinessRealAPIWithStaticLog:
                     Log.assertion("LogID in response validation", True)
                 
                 Log.info("User update API test completed successfully")
-                Log.end_test("test_user_update_api_with_static_log", "PASSED")
                 
         except Exception as e:
             Log.error(f"User update API test failed: {str(e)}")
             Log.end_test("test_user_update_api_with_static_log", "FAILED")
             raise
+        else:
+            # 最后一步：结束测试
+            Log.end_test("test_user_update_api_with_static_log", "PASSED")
     
     @allure.story("User Deletion API with Static Log")
     @allure.severity(allure.severity_level.NORMAL)
     def test_user_deletion_api_with_static_log(self):
         """Test user deletion via real API with static log tracing"""
+        # 第1步：设置 LogID
+        logid = generate_logid()
+        Log.set_logid(logid)
+        
+        # 第2步：开始测试
         Log.start_test("test_user_deletion_api_with_static_log")
         
         try:
@@ -288,17 +321,24 @@ class TestBusinessRealAPIWithStaticLog:
                     Log.assertion("LogID in response validation", True)
                 
                 Log.info("User deletion API test completed successfully")
-                Log.end_test("test_user_deletion_api_with_static_log", "PASSED")
                 
         except Exception as e:
             Log.error(f"User deletion API test failed: {str(e)}")
             Log.end_test("test_user_deletion_api_with_static_log", "FAILED")
             raise
+        else:
+            # 最后一步：结束测试
+            Log.end_test("test_user_deletion_api_with_static_log", "PASSED")
     
     @allure.story("End-to-End Workflow with Static Log")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_end_to_end_workflow_with_static_log(self):
         """Test complete user lifecycle with static log tracing"""
+        # 第1步：设置 LogID
+        logid = generate_logid()
+        Log.set_logid(logid)
+        
+        # 第2步：开始测试
         Log.start_test("test_end_to_end_workflow_with_static_log")
         
         try:
@@ -333,9 +373,11 @@ class TestBusinessRealAPIWithStaticLog:
                     Log.api_call("DELETE", f"/api/users/{test_user_id}", status_code=204, response_time=0.3)
                 
                 Log.info("End-to-end workflow test completed successfully")
-                Log.end_test("test_end_to_end_workflow_with_static_log", "PASSED")
                 
         except Exception as e:
             Log.error(f"End-to-end workflow test failed: {str(e)}")
             Log.end_test("test_end_to_end_workflow_with_static_log", "FAILED")
             raise
+        else:
+            # 最后一步：结束测试
+            Log.end_test("test_end_to_end_workflow_with_static_log", "PASSED")
