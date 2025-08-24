@@ -456,7 +456,7 @@ retry_count: 3
 default_headers:
   Content-Type: "application/json"
   Accept: "application/json"
-  User-Agent: "Universal-Test-Framework/1.0"
+  User-Agent: "PTE/1.0"
 
 database:
   mysql:
