@@ -103,7 +103,7 @@ run_real_api_tests() {
     fi
     
     # Run real API tests
-    pytest test/department/user/business_real_api_tests.py -v
+    pytest test/department/user/test_business_real_api_tests.py -v
     print_success "Real API tests completed"
 }
 
