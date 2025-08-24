@@ -1,0 +1,62 @@
+# Local test environment configuration example file
+
+# Host configuration
+host: "http://localhost:5001"
+
+# Timeout configuration
+timeout: 30
+retry_count: 3
+
+# Default request headers
+default_headers:
+  Content-Type: "application/json"
+  Accept: "application/json"
+  User-Agent: "PTE/1.0"
+
+# Database configuration
+database:
+  mysql:
+    host: "127.0.0.1"
+    port: 3306
+    username: "local_user"
+    password: "local_password"
+    database: "local_db"
+    charset: "utf8mb4"
+    pool_size: 5
+    max_overflow: 10
+    pool_timeout: 30
+    pool_recycle: 3600
+    description: "Local test MySQL database"
+
+# Environment configuration
+environments:
+  # Local development environment
+  local:
+    timeout: 30
+    retry_count: 3
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      Referer: "http://localhost:3000"
+    description: "Local development environment"
+
+# Test configuration
+test_config:
+  # Test data directory
+  test_data_dir: "data"
+  
+  # Test report directory
+  test_report_dir: "reports"
+  
+  # Test log directory
+  test_log_dir: "logs"
+  
+  # Default test markers
+  default_markers:
+    - "unit"
+    - "integration"
+    - "api"
+    - "smoke"
+    - "regression"
+    - "local"
+    - "test"
