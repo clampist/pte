@@ -9,7 +9,7 @@ from config.settings import TestEnvironment
 from api.client import APIClient
 from biz.department.user.operations import UserOperations
 from data.department.user.test_data import UserTestData
-from core.checker import DataChecker
+from core.checker import Checker
 from biz.department.user.checker import UserErrorChecker
 from core.logger import Log, generate_logid
 
@@ -29,9 +29,7 @@ class TestBusinessRealAPIWithStaticLog:
         # Initialize components (no need to pass logid)
         self.api_client = APIClient()
         self.user_ops = UserOperations()
-        self.test_data = UserTestData()
-        self.data_checker = DataChecker()
-        
+        self.test_data = UserTestData()     
         Log.info("Test environment setup completed", {
             "environment": TestEnvironment.get_current_env(),
             "host": TestEnvironment.get_host()

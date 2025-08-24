@@ -171,23 +171,23 @@ export TEST_ENV=dev_ci
 
 #### Universal Data Validation
 ```python
-from core.checker import DataChecker
+from core.checker import Checker
 
 # Basic assertions
-DataChecker.assert_not_none(data["field"], "field")
-DataChecker.assert_not_empty(data["list"], "list")
+Checker.assert_not_none(data["field"], "field")
+Checker.assert_not_empty(data["list"], "list")
 
 # Type assertions
-DataChecker.assert_int_data(data["id"], "id")
-DataChecker.assert_str_data(data["name"], "name")
-DataChecker.assert_bool_data(data["active"], "active")
-DataChecker.assert_float_data(data["price"], "price")
-DataChecker.assert_list_data(data["items"], "items")
-DataChecker.assert_dict_data(data["config"], "config")
+Checker.assert_int_data(data["id"], "id")
+Checker.assert_str_data(data["name"], "name")
+Checker.assert_bool_data(data["active"], "active")
+Checker.assert_float_data(data["price"], "price")
+Checker.assert_list_data(data["items"], "items")
+Checker.assert_dict_data(data["config"], "config")
 
 # Value assertions
-DataChecker.assert_in_range(data["age"], 0, 100, "age")
-DataChecker.assert_string_length(data["name"], 1, 50, "name")
+Checker.assert_in_range(data["age"], 0, 100, "age")
+Checker.assert_string_length(data["name"], 1, 50, "name")
 ```
 
 ### 2. Database Checker (core/db_checker.py)

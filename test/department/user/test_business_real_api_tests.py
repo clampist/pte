@@ -10,7 +10,7 @@ from config.settings import TestEnvironment
 from api.client import APIClient
 from biz.department.user.operations import UserOperations
 from data.department.user.test_data import UserTestData
-from core.checker import DataChecker
+from core.checker import Checker
 from core.logger import Log, generate_logid
 from biz.department.user.checker import UserErrorChecker
 
@@ -30,7 +30,6 @@ class TestBusinessRealAPI:
         self.api_client = APIClient()
         self.user_ops = UserOperations()
         self.test_data = UserTestData()
-        self.data_checker = DataChecker()
     
     @allure.story("Real API Connection")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -48,32 +47,32 @@ class TestBusinessRealAPI:
                 Log.info("\n=== Real API Connection Test ===")
                 
                 # Test API client initialization
-                assert self.api_client is not None
+                Checker.assert_not_none(self.api_client, "api_client")
                 Log.info("1. API Client Initialization")
                 Log.info("   ✅ API client initialized successfully")
                 
                 # Test host configuration
                 host = TestEnvironment.get_host()
-                assert host is not None
-                assert self.api_client.host == host
+                Checker.assert_not_none(host, "host")
+                Checker.assert_attr_equal(self.api_client, 'host', host)
                 Log.info(f"2. Host Configuration: {host}")
                 Log.info("   ✅ Host configuration correct")
                 
                 # Test headers configuration
                 headers = TestEnvironment.get_headers()
-                assert headers is not None
+                Checker.assert_not_none(headers, "headers")
                 
                 # Check that API client headers contain the original headers plus logId
-                assert 'logId' in self.api_client.headers  # API client should have logId
+                Checker.assert_contains(self.api_client.headers, 'logId')  # API client should have logId
                 # Remove logId for comparison with original headers
                 api_headers_without_logid = {k: v for k, v in self.api_client.headers.items() if k != 'logId'}
-                assert api_headers_without_logid == headers
+                Checker.assert_dict_equal(api_headers_without_logid, headers)
                 Log.info(f"3. Headers Configuration: {headers}")
                 Log.info("   ✅ Headers configuration correct")
                 
                 # Test timeout configuration
                 timeout = TestEnvironment.get_timeout()
-                assert timeout > 0
+                Checker.assert_true(timeout > 0, "timeout should be greater than 0")
                 Log.info(f"4. Timeout Configuration: {timeout} seconds")
                 Log.info("   ✅ Timeout configuration correct")
                 
@@ -511,8 +510,8 @@ class TestBusinessRealAPI:
                 
                 # Test business operations integration
                 Log.info("1. Business Operations Integration")
-                assert hasattr(self.user_ops, 'base_url')
-                assert hasattr(self.user_ops, 'headers')
+                Checker.assert_has_attr(self.user_ops, 'base_url')
+                Checker.assert_has_attr(self.user_ops, 'headers')
                 Log.info("   - API client integration verified")
                 Log.info("   - Business logic integration")
                 Log.info("   - Data flow validation")

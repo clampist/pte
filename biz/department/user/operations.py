@@ -7,7 +7,7 @@ import json
 import time
 from typing import Dict, List, Any, Optional
 from config.settings import TestEnvironment
-from core.checker import DataChecker
+from core.checker import Checker
 from biz.department.user.checker import UserDataChecker
 
 
@@ -119,10 +119,11 @@ class UserOperations:
         """
         result = self._make_request('GET', '/api/users')
         
-        # Validate response data
+                # Validate response data only if we have a successful response
         if 'users' in result:
-            DataChecker.assert_list_data(result['users'], "users")
-            DataChecker.assert_int_data(result['count'], "count")
+            Checker.assert_list_data(result['users'], "users")
+        if 'count' in result:
+            Checker.assert_int_data(result['count'], "count")
         
         return result
     

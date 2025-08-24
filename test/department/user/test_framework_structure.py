@@ -10,7 +10,7 @@ from config.settings import TestEnvironment
 from api.client import APIClient
 from biz.department.user.operations import UserOperations
 from data.department.user.test_data import UserTestData
-from core.checker import DataChecker
+from core.checker import Checker
 
 
 @allure.epic("PTE Framework")
@@ -28,7 +28,6 @@ class TestFrameworkStructureDemo:
         self.api_client = APIClient()
         self.user_ops = UserOperations()
         self.test_data = UserTestData()
-        self.data_checker = DataChecker()
     
     @allure.story("Framework Layers")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -46,10 +45,9 @@ class TestFrameworkStructureDemo:
                 Log.info("\n=== Framework Layered Structure Demo ===")
                 
                 # Verify components from each layer
-                assert self.api_client is not None
-                assert self.user_ops is not None
-                assert self.test_data is not None
-                assert self.data_checker is not None
+                Checker.assert_not_none(self.api_client, "api_client")
+                Checker.assert_not_none(self.user_ops, "user_ops")
+                Checker.assert_not_none(self.test_data, "test_data")
                 
                 Log.info("1. API Layer (api)")
                 Log.info("   - APIClient: HTTP request client")
@@ -64,7 +62,7 @@ class TestFrameworkStructureDemo:
                 Log.info("   ✅ Data layer components normal")
                 
                 Log.info("4. Core Layer (core)")
-                Log.info("   - DataChecker: Data checker")
+                Log.info("   - Checker: Data checker")
                 Log.info("   ✅ Core layer components normal")
                 
                 Log.info("   🎉 Framework layered structure verification completed")
@@ -99,17 +97,17 @@ class TestFrameworkStructureDemo:
                 
                 Log.info("1. Host Configuration")
                 Log.info(f"   Host: {host}")
-                assert host is not None
+                Checker.assert_not_none(host, "host")
                 Log.info("   ✅ Host configuration loaded successfully")
                 
                 Log.info("2. Headers Configuration")
                 Log.info(f"   Headers: {headers}")
-                assert headers is not None
+                Checker.assert_not_none(headers, "headers")
                 Log.info("   ✅ Headers configuration loaded successfully")
                 
                 Log.info("3. Timeout Configuration")
                 Log.info(f"   Timeout: {timeout} seconds")
-                assert timeout > 0
+                Checker.assert_true(timeout > 0, "timeout should be greater than 0")
                 Log.info("   ✅ Timeout configuration loaded successfully")
                 
                 Log.info("   🎉 Configuration loading functionality verification completed")
@@ -145,17 +143,17 @@ class TestFrameworkStructureDemo:
                 }
                 
                 Log.info("1. Basic Data Validation")
-                self.data_checker.assert_not_none(test_data)
-                self.data_checker.assert_str_data(test_data["name"])
-                self.data_checker.assert_int_data(test_data["age"])
+                Checker.assert_not_none(test_data)
+                Checker.assert_str_data(test_data["name"])
+                Checker.assert_int_data(test_data["age"])
                 Log.info("   ✅ Basic data validation passed")
                 
                 Log.info("2. Range Validation")
-                self.data_checker.assert_in_range(test_data["age"], 0, 150)
+                Checker.assert_in_range(test_data["age"], 0, 150)
                 Log.info("   ✅ Range validation passed")
                 
                 Log.info("3. String Length Validation")
-                self.data_checker.assert_string_length(test_data["name"], 1, 100)
+                Checker.assert_string_length(test_data["name"], 1, 100)
                 Log.info("   ✅ String length validation passed")
                 
                 Log.info("   🎉 Data checker functionality verification completed")
@@ -191,14 +189,14 @@ class TestFrameworkStructureDemo:
                 Log.info("2. Headers: {headers}")
                 
                 # Verify client configuration
-                assert self.api_client.host == host  # Use host instead of base_url
+                Checker.assert_attr_equal(self.api_client, 'host', host)  # Use host instead of base_url
                 
                 # Check that API client headers contain the original headers plus logId
                 expected_headers = headers.copy()
-                assert 'logId' in self.api_client.headers  # API client should have logId
+                Checker.assert_contains(self.api_client.headers, 'logId')  # API client should have logId
                 # Remove logId for comparison with original headers
                 api_headers_without_logid = {k: v for k, v in self.api_client.headers.items() if k != 'logId'}
-                assert api_headers_without_logid == expected_headers
+                Checker.assert_dict_equal(api_headers_without_logid, expected_headers)
                 Log.info("   ✅ API client configuration correct")
                 
                 Log.info("   🎉 API client functionality verification completed")
@@ -230,9 +228,9 @@ class TestFrameworkStructureDemo:
                 user_data = self.test_data.VALID_USER_1  # Use static property instead of method
                 
                 # Verify test data
-                assert user_data["name"] == "John Smith"
-                assert user_data["email"] == "john.smith@example.com"
-                assert user_data["age"] == 25
+                Checker.assert_field_value(user_data, "name", "John Smith")
+                Checker.assert_field_value(user_data, "email", "john.smith@example.com")
+                Checker.assert_field_value(user_data, "age", 25)
                 Log.info("   ✅ Test data validation correct")
                 
                 # Demonstrate business operations (not actually executed, just demonstrate interface)
@@ -275,18 +273,18 @@ class TestFrameworkStructureDemo:
                 edge_case_data = self.test_data.VALID_USER_2  # Use static property
                 
                 # Verify valid data
-                assert "name" in valid_data
-                assert "email" in valid_data
-                assert "age" in valid_data
+                Checker.assert_field_exists(valid_data, "name")
+                Checker.assert_field_exists(valid_data, "email")
+                Checker.assert_field_exists(valid_data, "age")
                 Log.info("   ✅ Valid data format correct")
                 
                 # Verify invalid data
-                assert "name" not in invalid_data
-                assert "email" in invalid_data
+                Checker.assert_field_not_exists(invalid_data, "name")
+                Checker.assert_field_exists(invalid_data, "email")
                 Log.info("   ✅ Invalid data format correct")
                 
                 # Verify boundary data
-                assert edge_case_data["age"] == 30
+                Checker.assert_field_value(edge_case_data, "age", 30)
                 Log.info("   ✅ Boundary data format correct")
                 
                 # Demonstrate test data methods
@@ -294,9 +292,9 @@ class TestFrameworkStructureDemo:
                 invalid_users = self.test_data.get_invalid_users()
                 update_data_sets = self.test_data.get_update_data_sets()
                 
-                assert len(valid_users) == 3
-                assert len(invalid_users) == 3
-                assert len(update_data_sets) == 3
+                Checker.assert_length(valid_users, 3)
+                Checker.assert_length(invalid_users, 3)
+                Checker.assert_length(update_data_sets, 3)
                 Log.info("   ✅ Test data methods available")
                 
                 Log.info("   🎉 Test data functionality verification completed")
@@ -374,20 +372,16 @@ class TestFrameworkStructureDemo:
                 Log.info("1. Prepare test data")
                 user_data = self.test_data.VALID_USER_1  # Use static property
                 
-                Log.info("2. Verify data checker")
-                assert self.data_checker is not None
-                Log.info("   ✅ Data checker available")
-                
-                Log.info("3. Verify business operations")
-                assert self.user_ops is not None
+                Log.info("2. Verify business operations")
+                Checker.assert_not_none(self.user_ops, "user_ops")
                 Log.info("   ✅ Business operations available")
                 
-                Log.info("4. Verify API client")
-                assert self.api_client is not None
+                Log.info("3. Verify API client")
+                Checker.assert_not_none(self.api_client, "api_client")
                 Log.info("   ✅ API client available")
                 
-                Log.info("5. Verify test data")
-                assert self.test_data is not None
+                Log.info("4. Verify test data")
+                Checker.assert_not_none(self.test_data, "test_data")
                 Log.info("   ✅ Test data available")
                 
                 Log.info("   🎉 Framework integration demo completed")
@@ -419,8 +413,8 @@ class TestFrameworkStructureDemo:
                 invalid_data = self.test_data.INVALID_USER_NO_NAME  # Use static property
                 
                 # Verify invalid data
-                assert "name" not in invalid_data
-                assert "email" in invalid_data
+                Checker.assert_field_not_exists(invalid_data, "name")
+                Checker.assert_field_exists(invalid_data, "email")
                 Log.info("   ✅ Invalid data identification correct")
                 
                 # Demonstrate error handling
@@ -433,7 +427,7 @@ class TestFrameworkStructureDemo:
                 
                 # Demonstrate data checker error handling
                 try:
-                    self.data_checker.assert_not_none(invalid_data)
+                    Checker.assert_not_none(invalid_data)
                     Log.info("   ✅ Data checker error handling normal")
                 except Exception as e:
                     Log.info(f"   ⚠️  Expected error handling: {type(e).__name__}")
@@ -465,7 +459,7 @@ class TestFrameworkStructureDemo:
                 
                 # Demonstrate extension points
                 Log.info("1. Data Checker Extension")
-                Log.info("   - Inherit DataChecker class")
+                Log.info("   - Inherit Checker class")
                 Log.info("   - Add custom validation methods")
                 Log.info("   ✅ Data checker extensible")
                 

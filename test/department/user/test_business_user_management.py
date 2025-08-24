@@ -10,7 +10,7 @@ from config.settings import TestEnvironment
 from api.client import APIClient
 from biz.department.user.operations import UserOperations
 from data.department.user.test_data import UserTestData
-from core.checker import DataChecker
+from core.checker import Checker
 from biz.department.user.checker import UserErrorChecker
 
 
@@ -29,7 +29,6 @@ class TestBusinessUserManagement:
         self.api_client = APIClient()
         self.user_ops = UserOperations()
         self.test_data = UserTestData()
-        self.data_checker = DataChecker()
         self.user_checker = UserErrorChecker()
     
     @allure.story("User Creation Business Logic")
@@ -54,12 +53,12 @@ class TestBusinessUserManagement:
                 Log.info(f"   User data: {user_data}")
                 
                 # Validate user data structure
-                assert 'name' in user_data
-                assert 'email' in user_data
-                assert 'age' in user_data
-                assert user_data['name'] == "John Smith"
-                assert user_data['email'] == "john.smith@example.com"
-                assert user_data['age'] == 25
+                Checker.assert_field_exists(user_data, 'name')
+                Checker.assert_field_exists(user_data, 'email')
+                Checker.assert_field_exists(user_data, 'age')
+                Checker.assert_field_value(user_data, 'name', "John Smith")
+                Checker.assert_field_value(user_data, 'email', "john.smith@example.com")
+                Checker.assert_field_value(user_data, 'age', 25)
                 Log.info("   ✅ Valid user data structure")
                 
                 # Test business validation
@@ -159,8 +158,8 @@ class TestBusinessUserManagement:
                 Log.info(f"   Update data: {update_data}")
                 
                 # Validate update data
-                assert 'name' in update_data
-                assert update_data['name'] == "Updated John Smith"
+                Checker.assert_field_exists(update_data, 'name')
+                Checker.assert_field_value(update_data, 'name', "Updated John Smith")
                 Log.info("   ✅ Update data validation")
                 
                 # Test update business rules
@@ -259,9 +258,9 @@ class TestBusinessUserManagement:
                 Log.info(f"   Valid user: {valid_user}")
                 
                 # Validate business rules for valid user
-                assert valid_user['name'] == "John Smith"
-                assert valid_user['email'] == "john.smith@example.com"
-                assert valid_user['age'] == 25
+                Checker.assert_field_value(valid_user, 'name', "John Smith")
+                Checker.assert_field_value(valid_user, 'email', "john.smith@example.com")
+                Checker.assert_field_value(valid_user, 'age', 25)
                 Log.info("   ✅ Valid user business rules")
                 
                 # Test invalid user data
@@ -270,8 +269,8 @@ class TestBusinessUserManagement:
                 Log.info(f"   Invalid user: {invalid_user}")
                 
                 # Validate business rules for invalid user
-                assert 'name' not in invalid_user
-                assert 'email' in invalid_user
+                Checker.assert_field_not_exists(invalid_user, 'name')
+                Checker.assert_field_exists(invalid_user, 'email')
                 Log.info("   ✅ Invalid user business rules")
                 
                 # Test business validation methods
@@ -514,11 +513,10 @@ class TestBusinessUserManagement:
                 
                 # Test component integration
                 Log.info("1. Component Integration")
-                assert self.api_client is not None
-                assert self.user_ops is not None
-                assert self.test_data is not None
-                assert self.data_checker is not None
-                assert self.user_checker is not None
+                Checker.assert_not_none(self.api_client, "api_client")
+                Checker.assert_not_none(self.user_ops, "user_ops")
+                Checker.assert_not_none(self.test_data, "test_data")
+                Checker.assert_not_none(self.user_checker, "user_checker")
                 Log.info("   ✅ Component integration verified")
                 
                 # Test data flow integration

@@ -1,7 +1,7 @@
 """
 User business checker - extends core checker with user-specific validations
 """
-from core.checker import ResponseChecker, DataChecker, ErrorChecker
+from core.checker import ResponseChecker, Checker, ErrorChecker
 from typing import Dict, List
 
 
@@ -21,7 +21,7 @@ class UserResponseChecker(ResponseChecker):
         ResponseChecker.assert_response_structure(response_or_data, required_keys, message)
 
 
-class UserDataChecker(DataChecker):
+class UserDataChecker(Checker):
     """User-specific data checker"""
     
     # User required fields

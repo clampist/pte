@@ -10,6 +10,7 @@ from api.client import APIClient
 from biz.department.user.operations import UserOperations
 from data.department.user.test_data import UserTestData
 from core.logger import Log, generate_logid
+from core.checker import Checker
 
 
 @allure.epic("PTE Framework")
@@ -84,16 +85,16 @@ class TestLogFunctionality:
             Log.info(f"当前 LogID: {original_logid}")
             
             # 验证 LogID 不为空
-            assert original_logid is not None, "LogID 应该不为空"
-            assert len(original_logid) > 0, "LogID 应该有内容"
+            Checker.assert_not_none(original_logid, "LogID")
+            Checker.assert_length_greater_than(original_logid, 0, "LogID")
             
             # 测试 LogID 一致性
             current_logid = Log.get_logid()
-            assert original_logid == current_logid, f"LogID 应该保持一致: {original_logid} vs {current_logid}"
+            Checker.assert_equal(original_logid, current_logid, "LogID")
             
             # 测试新 LogID 生成
             new_logid = generate_logid()
-            assert new_logid != original_logid, "新生成的 LogID 应该与原来的不同"
+            Checker.assert_not_equal(new_logid, original_logid, "LogID")
             
             Log.info("LogID 管理功能测试完成")
             
@@ -348,13 +349,13 @@ class TestLogFunctionality:
             })
             
             # 验证 LogID 在请求头中
-            assert 'logId' in headers, "请求头中应该包含 logId"
-            assert headers['logId'] == Log.get_logid(), "请求头中的 logId 应该与当前 LogID 一致"
+            Checker.assert_contains(headers, 'logId')
+            Checker.assert_equal(headers['logId'], Log.get_logid(), "logId in headers")
             
             # 验证其他请求头保持不变
-            assert headers['Authorization'] == 'Bearer token123'
-            assert headers['Content-Type'] == 'application/json'
-            assert headers['Custom-Header'] == 'value'
+            Checker.assert_equal(headers['Authorization'], 'Bearer token123', "Authorization header")
+            Checker.assert_equal(headers['Content-Type'], 'application/json', "Content-Type header")
+            Checker.assert_equal(headers['Custom-Header'], 'value', "Custom-Header")
             
             Log.info("带 LogID 的请求头功能测试完成")
             
@@ -401,9 +402,9 @@ class TestLogFunctionality:
             Log.info("测试数据获取完成", {"user_data": user_data})
             
             # 验证数据
-            assert user_data["name"] == "John Smith"
-            assert user_data["email"] == "john.smith@example.com"
-            assert user_data["age"] == 25
+            Checker.assert_field_value(user_data, "name", "John Smith")
+            Checker.assert_field_value(user_data, "email", "john.smith@example.com")
+            Checker.assert_field_value(user_data, "age", 25)
             
             Log.info("框架组件集成测试完成")
             
@@ -471,20 +472,20 @@ def test_logid_consistency_across_calls():
         for i in range(5):
             Log.info(f"第 {i+1} 次日志调用")
             current_logid = Log.get_logid()
-            assert current_logid == initial_logid, f"第 {i+1} 次调用的 LogID 不一致"
+            Checker.assert_equal(current_logid, initial_logid, f"LogID at call {i+1}")
         
         # 调用不同类型的日志方法
         Log.warning("警告日志测试")
-        assert Log.get_logid() == initial_logid, "警告日志后 LogID 不一致"
+        Checker.assert_equal(Log.get_logid(), initial_logid, "LogID after warning")
         
         Log.error("错误日志测试")
-        assert Log.get_logid() == initial_logid, "错误日志后 LogID 不一致"
+        Checker.assert_equal(Log.get_logid(), initial_logid, "LogID after error")
         
         Log.api_call("GET", "/test", 200, 0.1)
-        assert Log.get_logid() == initial_logid, "API 调用日志后 LogID 不一致"
+        Checker.assert_equal(Log.get_logid(), initial_logid, "LogID after API call")
         
         Log.assertion("测试断言", True, "expected", "expected")
-        assert Log.get_logid() == initial_logid, "断言日志后 LogID 不一致"
+        Checker.assert_equal(Log.get_logid(), initial_logid, "LogID after assertion")
         
         Log.info("LogID 一致性测试完成")
         
