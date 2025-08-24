@@ -1,0 +1,52 @@
+[run]
+source = .
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */.venv/*
+    */env/*
+    */.env/*
+    */site-packages/*
+    */dist-packages/*
+    */build/*
+    */dist/*
+    */eggs/*
+    */.git/*
+    */.tox/*
+    */.pytest_cache/*
+    */reports/*
+    */docs/*
+    */scripts/*
+
+    */config_manager.py
+
+    */generate_report.sh
+    */run_tests.sh
+
+    */manage_coverage.sh
+
+    */README.md
+    */pytest.ini
+    */requirements*.txt
+    */.coveragerc
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+    def main\(\):
+    if TYPE_CHECKING:
+    from __future__ import annotations
+
+[html]
+directory = reports/coverage-html

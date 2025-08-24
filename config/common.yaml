@@ -1,124 +1,124 @@
-# 通用配置文件 - 包含日志、报告等通用配置
+# Common configuration file - includes logging, reporting and other common configurations
 
-# 日志配置
+# Logging configuration
 logging:
-  # 是否启用文件日志输出
+  # Whether to enable file logging output
   enable_file_logging: true
   
-  # 日志文件配置
+  # Log file configuration
   file:
-    # 日志文件目录 (相对于项目根目录)
+    # Log file directory (relative to project root)
     directory: "logs"
     
-    # 日志文件名格式 (支持时间变量和测试用例信息)
-    # 可用变量: {date}, {time}, {datetime}, {level}, {testcase}, {logid}
-    # {date}: YYYYMMDD 格式的日期
-    # {time}: HHMMSS 格式的时间
-    # {datetime}: YYYYMMDD_HHMMSS 格式的日期时间
-    # {testcase}: 测试用例名称 (自动提取)
-    # {logid}: 当前 LogID (自动填充)
+    # Log filename format (supports time variables and test case information)
+    # Available variables: {date}, {time}, {datetime}, {level}, {testcase}, {logid}
+    # {date}: Date in YYYYMMDD format
+    # {time}: Time in HHMMSS format
+    # {datetime}: Date and time in YYYYMMDD_HHMMSS format
+    # {testcase}: Test case name (automatically extracted)
+    # {logid}: Current LogID (automatically filled)
     filename_format: "pte_{datetime}_{testcase}_{logid}_{level}.log"
     
-    # 日志级别 (DEBUG, INFO, WARNING, ERROR)
+    # Log level (DEBUG, INFO, WARNING, ERROR)
     level: "INFO"
     
-    # 日志格式
+    # Log format
     format: "[{timestamp}] [{level}] [{logid}] [{caller}] {message}"
     
-    # 是否按日期分割日志文件
+    # Whether to split log files by date
     rotate_by_date: true
     
-    # 是否按日志级别分别输出文件
+    # Whether to output separate files by log level
     separate_by_level: false
     
-    # 日志文件保留天数 (0表示不删除)
+    # Log file retention days (0 means no deletion)
     retention_days: 30
     
-    # 日志文件最大大小 (MB, 0表示不限制)
+    # Maximum log file size (MB, 0 means no limit)
     max_size_mb: 100
     
-    # 是否启用日志压缩
+    # Whether to enable log compression
     enable_compression: false
   
-  # 控制台输出配置
+  # Console output configuration
   console:
-    # 是否启用控制台输出
+    # Whether to enable console output
     enabled: true
     
-    # 控制台日志级别
+    # Console log level
     level: "ERROR"
     
-    # 控制台日志格式
+    # Console log format
     format: "[{timestamp}] [{level}] [{logid}] [{caller}] {message}"
   
-  # Allure报告配置
+  # Allure report configuration
   allure:
-    # 是否启用Allure日志输出
+    # Whether to enable Allure log output
     enabled: true
     
-    # Allure日志级别
+    # Allure log level
     level: "INFO"
     
-    # 是否在Allure中显示详细数据
+    # Whether to show detailed data in Allure
     show_detailed_data: true
 
-# 报告配置
+# Reporting configuration
 reporting:
-  # Allure报告配置
+  # Allure report configuration
   allure:
-    # 报告输出目录
+    # Report output directory
     output_dir: "reports/allure"
     
-    # 是否自动生成报告
+    # Whether to auto-generate reports
     auto_generate: true
     
-    # 报告标题
+    # Report title
     title: "PTE Test Report"
   
-  # 覆盖率报告配置
+  # Coverage report configuration
   coverage:
-    # 覆盖率报告输出目录
+    # Coverage report output directory
     output_dir: "reports/coverage"
     
-    # 是否生成HTML报告
+    # Whether to generate HTML reports
     generate_html: true
     
-    # 是否生成XML报告
+    # Whether to generate XML reports
     generate_xml: true
 
-# 测试配置
+# Test configuration
 test:
-  # 默认超时时间 (秒)
+  # Default timeout (seconds)
   default_timeout: 30
   
-  # 默认重试次数
+  # Default retry count
   default_retry_count: 3
   
-  # 并行测试配置
+  # Parallel test configuration
   parallel:
-    # 是否启用并行测试
+    # Whether to enable parallel testing
     enabled: false
     
-    # 并行进程数
+    # Number of parallel processes
     workers: 2
     
-    # 并行模式 (processes, threads)
+    # Parallel mode (processes, threads)
     mode: "processes"
   
-  # 数据驱动配置
+  # Data-driven configuration
   data_driven:
-    # 测试数据目录
+    # Test data directory
     data_dir: "data"
     
-    # 是否启用数据驱动测试
+    # Whether to enable data-driven testing
     enabled: true
 
-# 环境配置
+# Environment configuration
 environment:
-  # 默认环境
+  # Default environment
   default: "local"
   
-  # 环境列表
+  # Available environments
   available:
     - "local"
     - "dev"

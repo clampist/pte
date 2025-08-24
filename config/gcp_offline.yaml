@@ -1,19 +1,19 @@
-# 线下GCP环境配置文件
+# Offline GCP environment configuration file
 
-# 主机配置
+# Host configuration
 host: "http://gcp-offline-api.example.com"
 
-# 超时配置
+# Timeout configuration
 timeout: 30
 retry_count: 3
 
-# 默认请求头
+# Default request headers
 default_headers:
   Content-Type: "application/json"
   Accept: "application/json"
   User-Agent: "Universal-Test-Framework/1.0"
 
-# 数据库配置
+# Database configuration
 database:
   mysql:
     host: "gcp-offline-mysql.example.com"
@@ -26,11 +26,11 @@ database:
     max_overflow: 20
     pool_timeout: 30
     pool_recycle: 3600
-    description: "线下GCP MySQL数据库"
+    description: "Offline GCP MySQL database"
 
-# 环境配置
+# Environment configuration
 environments:
-  # 线下生产环境
+  # Offline production environment
   prod:
     timeout: 30
     retry_count: 3
@@ -38,9 +38,9 @@ environments:
       Content-Type: "application/json"
       Accept: "application/json"
       Referer: "http://offline.example.com"
-    description: "线下生产环境"
+    description: "Offline production environment"
     
-  # 线下功能1开发环境
+  # Offline feature 1 development environment
   dev_fea1:
     timeout: 30
     retry_count: 3
@@ -48,9 +48,9 @@ environments:
       Content-Type: "application/json"
       Accept: "application/json"
       Referer: "http://dev-fea1.example.com"
-    description: "线下功能1开发环境"
+    description: "Offline feature 1 development environment"
     
-  # 线下CI环境
+  # Offline CI environment
   dev_ci:
     timeout: 30
     retry_count: 3
@@ -58,9 +58,9 @@ environments:
       Content-Type: "application/json"
       Accept: "application/json"
       Referer: "http://dev-ci.example.com"
-    description: "线下CI环境"
+    description: "Offline CI environment"
     
-  # 线下测试环境
+  # Offline test environment
   dev_test:
     timeout: 30
     retry_count: 3
@@ -68,20 +68,20 @@ environments:
       Content-Type: "application/json"
       Accept: "application/json"
       Referer: "http://dev-test.example.com"
-    description: "线下测试环境"
+    description: "Offline test environment"
 
-# 测试配置
+# Test configuration
 test_config:
-  # 测试数据路径
+  # Test data directory
   test_data_dir: "data"
   
-  # 测试报告路径
+  # Test report directory
   test_report_dir: "reports"
   
-  # 测试日志路径
+  # Test log directory
   test_log_dir: "logs"
   
-  # 默认测试标记
+  # Default test markers
   default_markers:
     - "unit"
     - "integration"

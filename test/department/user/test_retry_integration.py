@@ -1,6 +1,6 @@
 """
-PTE Retry功能集成测试
-展示在实际测试场景中如何使用retry功能
+PTE Retry Functionality Integration Tests
+Demonstrates how to use retry functionality in actual test scenarios
 """
 import pytest
 import allure
@@ -16,6 +16,7 @@ from core.retry import (
     retry_on_empty
 )
 from core.logger import Log, generate_logid
+from core.checker import Checker
 from api.client import APIClient
 from biz.department.user.operations import UserOperations
 
@@ -23,29 +24,29 @@ from biz.department.user.operations import UserOperations
 @allure.epic("PTE Framework")
 @allure.feature("Retry Integration")
 class TestRetryIntegration:
-    """PTE Retry功能集成测试类"""
+    """PTE Retry Functionality Integration Test Class"""
     
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test environment"""
-        # 初始化组件
+        # Initialize components
         self.api_client = APIClient()
         self.user_ops = UserOperations()
     
     @allure.story("API Call with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_api_call_with_retry(self):
-        """测试API调用重试场景"""
-        # 设置LogID
+        """Test API call retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_api_call_with_retry")
         
         try:
-            Log.info("开始测试API调用重试场景")
+            Log.info("Starting API call retry scenario test")
             
-            # 模拟不稳定的API调用
+            # Simulate unstable API call
             call_count = 0
             
             @retry_on_exception(
@@ -57,22 +58,22 @@ class TestRetryIntegration:
                 nonlocal call_count
                 call_count += 1
                 
-                # 模拟网络不稳定
+                # Simulate network instability
                 if call_count < 3:
-                    if random.random() < 0.7:  # 70%概率失败
-                        raise ConnectionError(f"网络连接失败 #{call_count}")
+                    if random.random() < 0.7:  # 70% failure probability
+                        raise ConnectionError(f"Network connection failed #{call_count}")
                 
                 return {"status": "success", "data": {"user_id": 12345}}
             
-            # 执行API调用
+            # Execute API call
             result = unstable_api_call()
             
-            # 验证结果
-            assert result["status"] == "success"
-            assert result["data"]["user_id"] == 12345
-            assert call_count >= 1
+            # Verify result
+            Checker.assert_equal(result["status"], "success")
+            Checker.assert_equal(result["data"]["user_id"], 12345)
+            Checker.assert_greater_equal(call_count, 1)
             
-            Log.info("API调用重试场景测试完成")
+            Log.info("API call retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_api_call_with_retry test failed: {str(e)}")
@@ -84,17 +85,17 @@ class TestRetryIntegration:
     @allure.story("Database Operation with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_database_operation_with_retry(self):
-        """测试数据库操作重试场景"""
-        # 设置LogID
+        """Test database operation retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_database_operation_with_retry")
         
         try:
-            Log.info("开始测试数据库操作重试场景")
+            Log.info("Starting database operation retry scenario test")
             
-            # 模拟数据库连接不稳定
+            # Simulate unstable database connection
             call_count = 0
             
             @retry_on_exception(
@@ -107,21 +108,21 @@ class TestRetryIntegration:
                 nonlocal call_count
                 call_count += 1
                 
-                # 模拟数据库连接问题
+                # Simulate database connection issues
                 if call_count < 3:
-                    raise Exception(f"数据库连接失败 #{call_count}")
+                    raise Exception(f"Database connection failed #{call_count}")
                 
                 return {"affected_rows": 1, "status": "success"}
             
-            # 执行数据库操作
+            # Execute database operation
             result = database_operation()
             
-            # 验证结果
-            assert result["status"] == "success"
-            assert result["affected_rows"] == 1
-            assert call_count >= 1
+            # Verify result
+            Checker.assert_equal(result["status"], "success")
+            Checker.assert_equal(result["affected_rows"], 1)
+            Checker.assert_greater_equal(call_count, 1)
             
-            Log.info("数据库操作重试场景测试完成")
+            Log.info("Database operation retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_database_operation_with_retry test failed: {str(e)}")
@@ -133,17 +134,17 @@ class TestRetryIntegration:
     @allure.story("Async Task Wait with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_async_task_wait_with_retry(self):
-        """测试异步任务等待重试场景"""
-        # 设置LogID
+        """Test async task wait retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_async_task_wait_with_retry")
         
         try:
-            Log.info("开始测试异步任务等待重试场景")
+            Log.info("Starting async task wait retry scenario test")
             
-            # 模拟异步任务状态检查
+            # Simulate async task status check
             task_status = "pending"
             check_count = 0
             
@@ -156,21 +157,21 @@ class TestRetryIntegration:
                 nonlocal task_status, check_count
                 check_count += 1
                 
-                # 模拟任务状态变化
+                # Simulate task status change
                 if check_count >= 3:
                     task_status = "completed"
                 
                 return {"status": task_status, "progress": check_count * 20}
             
-            # 检查任务状态
+            # Check task status
             result = check_task_status()
             
-            # 验证结果
-            assert result["status"] == "completed"
-            assert result["progress"] >= 60
-            assert check_count >= 3
+            # Verify result
+            Checker.assert_equal(result["status"], "completed")
+            Checker.assert_greater_equal(result["progress"], 60)
+            Checker.assert_greater_equal(check_count, 3)
             
-            Log.info("异步任务等待重试场景测试完成")
+            Log.info("Async task wait retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_async_task_wait_with_retry test failed: {str(e)}")
@@ -182,17 +183,17 @@ class TestRetryIntegration:
     @allure.story("File Operation with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_file_operation_with_retry(self):
-        """测试文件操作重试场景"""
-        # 设置LogID
+        """Test file operation retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_file_operation_with_retry")
         
         try:
-            Log.info("开始测试文件操作重试场景")
+            Log.info("Starting file operation retry scenario test")
             
-            # 模拟文件系统不稳定
+            # Simulate unstable file system
             call_count = 0
             
             @retry_on_exception(
@@ -204,21 +205,21 @@ class TestRetryIntegration:
                 nonlocal call_count
                 call_count += 1
                 
-                # 模拟文件系统问题
+                # Simulate file system issues
                 if call_count < 3:
-                    raise FileNotFoundError(f"文件不存在 #{call_count}")
+                    raise FileNotFoundError(f"File not found #{call_count}")
                 
                 return {"content": "file content", "size": 1024}
             
-            # 执行文件操作
+            # Execute file operation
             result = file_operation()
             
-            # 验证结果
-            assert result["content"] == "file content"
-            assert result["size"] == 1024
-            assert call_count >= 1
+            # Verify result
+            Checker.assert_equal(result["content"], "file content")
+            Checker.assert_equal(result["size"], 1024)
+            Checker.assert_greater_equal(call_count, 1)
             
-            Log.info("文件操作重试场景测试完成")
+            Log.info("File operation retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_file_operation_with_retry test failed: {str(e)}")
@@ -230,17 +231,17 @@ class TestRetryIntegration:
     @allure.story("Data Validation with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_data_validation_with_retry(self):
-        """测试数据验证重试场景"""
-        # 设置LogID
+        """Test data validation retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_data_validation_with_retry")
         
         try:
-            Log.info("开始测试数据验证重试场景")
+            Log.info("Starting data validation retry scenario test")
             
-            # 模拟数据验证过程
+            # Simulate data validation process
             validation_count = 0
             
             @retry_on_false(max_attempts=4, delay=0.1)
@@ -248,20 +249,20 @@ class TestRetryIntegration:
                 nonlocal validation_count
                 validation_count += 1
                 
-                # 模拟数据验证失败
+                # Simulate data validation failure
                 if validation_count < 3:
                     return False
                 
                 return True
             
-            # 执行数据验证
+            # Execute data validation
             result = validate_data()
             
-            # 验证结果
-            assert result is True
-            assert validation_count >= 3
+            # Verify result
+            Checker.assert_true(result is True)
+            Checker.assert_greater_equal(validation_count, 3)
             
-            Log.info("数据验证重试场景测试完成")
+            Log.info("Data validation retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_data_validation_with_retry test failed: {str(e)}")
@@ -273,17 +274,17 @@ class TestRetryIntegration:
     @allure.story("Resource Availability with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_resource_availability_with_retry(self):
-        """测试资源可用性重试场景"""
-        # 设置LogID
+        """Test resource availability retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_resource_availability_with_retry")
         
         try:
-            Log.info("开始测试资源可用性重试场景")
+            Log.info("Starting resource availability retry scenario test")
             
-            # 模拟资源检查
+            # Simulate resource check
             check_count = 0
             
             @retry_on_false(max_attempts=5, delay=0.2)
@@ -291,20 +292,20 @@ class TestRetryIntegration:
                 nonlocal check_count
                 check_count += 1
                 
-                # 模拟资源不可用
+                # Simulate resource unavailability
                 if check_count < 4:
                     return False
                 
                 return True
             
-            # 检查资源可用性
+            # Check resource availability
             result = check_resource()
             
-            # 验证结果
-            assert result is True
-            assert check_count >= 4
+            # Verify result
+            Checker.assert_true(result is True)
+            Checker.assert_greater_equal(check_count, 4)
             
-            Log.info("资源可用性重试场景测试完成")
+            Log.info("Resource availability retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_resource_availability_with_retry test failed: {str(e)}")
@@ -316,17 +317,17 @@ class TestRetryIntegration:
     @allure.story("Complex Business Logic with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_complex_business_logic_with_retry(self):
-        """测试复杂业务逻辑重试场景"""
-        # 设置LogID
+        """Test complex business logic retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_complex_business_logic_with_retry")
         
         try:
-            Log.info("开始测试复杂业务逻辑重试场景")
+            Log.info("Starting complex business logic retry scenario test")
             
-            # 模拟复杂的业务逻辑
+            # Simulate complex business logic
             step_count = 0
             
             @retry_on_exception(
@@ -338,24 +339,24 @@ class TestRetryIntegration:
                 nonlocal step_count
                 step_count += 1
                 
-                # 模拟业务逻辑失败
+                # Simulate business logic failure
                 if step_count < 3:
                     if step_count == 1:
-                        raise ValueError("业务规则验证失败")
+                        raise ValueError("Business rule validation failed")
                     else:
-                        raise RuntimeError("数据处理异常")
+                        raise RuntimeError("Data processing exception")
                 
                 return {"status": "success", "processed_items": 100}
             
-            # 执行复杂业务逻辑
+            # Execute complex business logic
             result = complex_business_logic()
             
-            # 验证结果
-            assert result["status"] == "success"
-            assert result["processed_items"] == 100
-            assert step_count >= 3
+            # Verify result
+            Checker.assert_equal(result["status"], "success")
+            Checker.assert_equal(result["processed_items"], 100)
+            Checker.assert_greater_equal(step_count, 3)
             
-            Log.info("复杂业务逻辑重试场景测试完成")
+            Log.info("Complex business logic retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_complex_business_logic_with_retry test failed: {str(e)}")
@@ -367,17 +368,17 @@ class TestRetryIntegration:
     @allure.story("Timeout Handling with Retry")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_timeout_handling_with_retry(self):
-        """测试超时处理重试场景"""
-        # 设置LogID
+        """Test timeout handling retry scenario"""
+        # Set LogID
         logid = generate_logid()
         Log.set_logid(logid)
         
         Log.start_test("test_timeout_handling_with_retry")
         
         try:
-            Log.info("开始测试超时处理重试场景")
+            Log.info("Starting timeout handling retry scenario test")
             
-            # 模拟超时操作
+            # Simulate timeout operation
             attempt_count = 0
             
             @retry_on_exception(
@@ -390,20 +391,20 @@ class TestRetryIntegration:
                 nonlocal attempt_count
                 attempt_count += 1
                 
-                # 模拟超时
+                # Simulate timeout
                 if attempt_count < 3:
-                    time.sleep(0.6)  # 超过超时时间
+                    time.sleep(0.6)  # Exceed timeout
                 
                 return {"status": "completed", "duration": 0.1}
             
-            # 执行超时操作
+            # Execute timeout operation
             result = timeout_operation()
             
-            # 验证结果
-            assert result["status"] == "completed"
-            assert attempt_count >= 1
+            # Verify result
+            Checker.assert_equal(result["status"], "completed")
+            Checker.assert_greater_equal(attempt_count, 1)
             
-            Log.info("超时处理重试场景测试完成")
+            Log.info("Timeout handling retry scenario test completed")
             
         except Exception as e:
             Log.error(f"test_timeout_handling_with_retry test failed: {str(e)}")

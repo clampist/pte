@@ -10,22 +10,45 @@ from datetime import datetime
 # Add project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from config.settings import TestEnvironment
+
+
+def get_mysql_config():
+    """Get MySQL configuration from config file"""
+    try:
+        mysql_config = TestEnvironment.get_mysql_config()
+        return mysql_config
+    except Exception as e:
+        print(f"❌ Failed to load MySQL configuration: {e}")
+        # Fallback to default values
+        return {
+            "host": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "password": "password",
+            "database": "pte",
+            "charset": "utf8mb4"
+        }
+
 
 def create_database():
     """Create PTE database"""
     try:
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Connect to MySQL server (without specifying database)
         connection = pymysql.connect(
-            host='127.0.0.1',
-            port=8306,
-            user='root',
-            password='patest',
-            charset='utf8mb4'
+            host=mysql_config['host'],
+            port=mysql_config['port'],
+            user=mysql_config['username'],
+            password=mysql_config['password'],
+            charset=mysql_config['charset']
         )
         
         with connection.cursor() as cursor:
             # Create database if not exists
-            cursor.execute("CREATE DATABASE IF NOT EXISTS pte CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {mysql_config['database']} CHARACTER SET {mysql_config['charset']} COLLATE {mysql_config['charset']}_unicode_ci")
             print("✅ Database 'pte' created successfully")
             
         connection.close()
@@ -39,14 +62,17 @@ def create_database():
 def create_users_table():
     """Create users table"""
     try:
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Connect to PTE database
         connection = pymysql.connect(
-            host='127.0.0.1',
-            port=8306,
-            user='root',
-            password='patest',
-            database='pte',
-            charset='utf8mb4'
+            host=mysql_config['host'],
+            port=mysql_config['port'],
+            user=mysql_config['username'],
+            password=mysql_config['password'],
+            database=mysql_config['database'],
+            charset=mysql_config['charset']
         )
         
         with connection.cursor() as cursor:
@@ -78,14 +104,17 @@ def create_users_table():
 def insert_test_data():
     """Insert test data"""
     try:
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Connect to PTE database
         connection = pymysql.connect(
-            host='127.0.0.1',
-            port=8306,
-            user='root',
-            password='patest',
-            database='pte',
-            charset='utf8mb4'
+            host=mysql_config['host'],
+            port=mysql_config['port'],
+            user=mysql_config['username'],
+            password=mysql_config['password'],
+            database=mysql_config['database'],
+            charset=mysql_config['charset']
         )
         
         with connection.cursor() as cursor:
@@ -130,14 +159,17 @@ def insert_test_data():
 def verify_database():
     """Verify database setup"""
     try:
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Connect to PTE database
         connection = pymysql.connect(
-            host='127.0.0.1',
-            port=8306,
-            user='root',
-            password='patest',
-            database='pte',
-            charset='utf8mb4'
+            host=mysql_config['host'],
+            port=mysql_config['port'],
+            user=mysql_config['username'],
+            password=mysql_config['password'],
+            database=mysql_config['database'],
+            charset=mysql_config['charset']
         )
         
         with connection.cursor() as cursor:
@@ -185,12 +217,16 @@ def verify_database():
 def main():
     """Main function"""
     print("=== PTE Database Initialization ===")
+    
+    # Get MySQL configuration
+    mysql_config = get_mysql_config()
+    
     print("Configuration information:")
-    print("  Host: 127.0.0.1")
-    print("  Port: 8306")
-    print("  Username: root")
-    print("  Password: patest")
-    print("  Database: pte")
+    print(f"  Host: {mysql_config['host']}")
+    print(f"  Port: {mysql_config['port']}")
+    print(f"  Username: {mysql_config['username']}")
+    print(f"  Password: {'*' * len(mysql_config['password'])}")  # Hide password
+    print(f"  Database: {mysql_config['database']}")
     print()
     
     # Step 1: Create database

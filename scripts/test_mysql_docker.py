@@ -15,6 +15,24 @@ from core.db_checker import DatabaseConfig
 from biz.department.user.db_checker import UserDBChecker
 
 
+def get_mysql_config():
+    """Get MySQL configuration from config file"""
+    try:
+        mysql_config = TestEnvironment.get_mysql_config()
+        return mysql_config
+    except Exception as e:
+        print(f"❌ Failed to load MySQL configuration: {e}")
+        # Fallback to default values
+        return {
+            "host": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "password": "password",
+            "database": "pte",
+            "charset": "utf8mb4"
+        }
+
+
 def check_docker_mysql():
     """Check if MySQL Docker container is running"""
     try:
@@ -44,10 +62,13 @@ def test_mysql_connection():
     try:
         print("=== Testing Docker MySQL Connection ===")
         
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Test basic connection
         cmd = [
             'docker', 'exec', '-i', 'mysql57', 
-            'mysql', '-u', 'root', '-ppatest', 
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", 
             '-e', 'SELECT 1 as test'
         ]
         
@@ -74,11 +95,14 @@ def create_pte_database():
     try:
         print("=== Creating PTE Database ===")
         
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Create database
         create_db_cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest',
-            '-e', 'CREATE DATABASE IF NOT EXISTS pte CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}",
+            '-e', f"CREATE DATABASE IF NOT EXISTS {mysql_config['database']} CHARACTER SET {mysql_config['charset']} COLLATE {mysql_config['charset']}_unicode_ci"
         ]
         
         result = subprocess.run(create_db_cmd, capture_output=True, text=True, timeout=10)
@@ -100,6 +124,9 @@ def create_users_table():
     try:
         print("=== Creating Users Table ===")
         
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -115,7 +142,7 @@ def create_users_table():
         
         cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest', 'pte',
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", mysql_config['database'],
             '-e', create_table_sql
         ]
         
@@ -138,10 +165,13 @@ def insert_test_data():
     try:
         print("=== Inserting Test Data ===")
         
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Check if test data already exists
         check_cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest', 'pte',
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", mysql_config['database'],
             '-e', "SELECT COUNT(*) as count FROM users WHERE email LIKE 'test%@example.com'"
         ]
         
@@ -172,7 +202,7 @@ def insert_test_data():
         
         cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest', 'pte',
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", mysql_config['database'],
             '-e', insert_sql
         ]
         
@@ -195,16 +225,19 @@ def verify_database_setup():
     try:
         print("=== Verifying Database Setup ===")
         
+        # Get MySQL configuration
+        mysql_config = get_mysql_config()
+        
         # Check database
         check_db_cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest',
-            '-e', 'SHOW DATABASES LIKE "pte"'
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}",
+            '-e', f'SHOW DATABASES LIKE "{mysql_config["database"]}"'
         ]
         
         result = subprocess.run(check_db_cmd, capture_output=True, text=True, timeout=10)
         
-        if result.returncode == 0 and 'pte' in result.stdout:
+        if result.returncode == 0 and mysql_config['database'] in result.stdout:
             print("✅ PTE database exists")
         else:
             print("❌ PTE database does not exist")
@@ -213,7 +246,7 @@ def verify_database_setup():
         # Check users table
         check_table_cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest', 'pte',
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", mysql_config['database'],
             '-e', 'SHOW TABLES LIKE "users"'
         ]
         
@@ -228,7 +261,7 @@ def verify_database_setup():
         # Get table structure
         structure_cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest', 'pte',
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", mysql_config['database'],
             '-e', 'DESCRIBE users'
         ]
         
@@ -241,7 +274,7 @@ def verify_database_setup():
         # Get user count
         count_cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest', 'pte',
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", mysql_config['database'],
             '-e', 'SELECT COUNT(*) as user_count FROM users'
         ]
         
@@ -254,7 +287,7 @@ def verify_database_setup():
         # Show sample data
         sample_cmd = [
             'docker', 'exec', '-i', 'mysql57',
-            'mysql', '-u', 'root', '-ppatest', 'pte',
+            'mysql', '-u', mysql_config['username'], f"-p{mysql_config['password']}", mysql_config['database'],
             '-e', 'SELECT id, name, email, age FROM users LIMIT 3'
         ]
         
@@ -334,20 +367,24 @@ def test_python_connection():
 def main():
     """Main function"""
     print("=== Docker MySQL Verification Test ===")
+    
+    # Get MySQL configuration
+    mysql_config = get_mysql_config()
+    
     print("Configuration information:")
     print("  Container name: mysql57")
-    print("  Host: 127.0.0.1")
-    print("  Port: 8306")
-    print("  Username: root")
-    print("  Password: patest")
-    print("  Database: pte")
+    print(f"  Host: {mysql_config['host']}")
+    print(f"  Port: {mysql_config['port']}")
+    print(f"  Username: {mysql_config['username']}")
+    print(f"  Password: {'*' * len(mysql_config['password'])}")  # Hide password
+    print(f"  Database: {mysql_config['database']}")
     print()
     
     # Step 1: Check Docker MySQL container
     print("Step 1: Checking Docker MySQL container...")
     if not check_docker_mysql():
         print("Please ensure MySQL Docker container is running:")
-        print("  docker run --name mysql57 -p 8306:3306 -e MYSQL_ROOT_PASSWORD=patest -d mysql:5.7")
+        print(f"  docker run --name mysql57 -p {mysql_config['port']}:3306 -e MYSQL_ROOT_PASSWORD={mysql_config['password']} -d mysql:5.7")
         return 1
     
     # Step 2: Test Docker MySQL connection
