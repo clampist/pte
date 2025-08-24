@@ -139,6 +139,9 @@ coverage.xml
 config/local_*.yaml
 config/prod_*.yaml
 config/staging_*.yaml
+config/*_local.yaml
+config/*_prod.yaml
+config/*_staging.yaml
 
 # Test artifacts
 test_artifacts/
